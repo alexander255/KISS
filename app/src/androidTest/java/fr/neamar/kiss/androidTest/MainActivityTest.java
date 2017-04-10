@@ -46,19 +46,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     public void testSearchResultAppears() {
         onView(withId(R.id.searchEditText)).perform(typeText("blahblah"));
-        onView(withId(R.id.item_search_icon)).check(matches(isDisplayed()));
-        onView(withId(R.id.item_search_text)).check(matches(withText("Search Google for “blahblah”")));
+        onView(withId(R.id.result_icon)).check(matches(isDisplayed()));
+        onView(withId(R.id.result_text)).check(matches(withText("Search Google for “blahblah”")));
     }
 
     public void testTorchToggleAppears() {
         onView(withId(R.id.searchEditText)).perform(typeText("torch"));
-        onView(withId(R.id.item_toggle_icon)).check(matches(isDisplayed()));
-        onView(withId(R.id.item_toggle_name)).check(matches(withText("Toggle: Torch")));
+        onView(withId(R.id.result_icon)).check(matches(isDisplayed()));
+        onView(withId(R.id.result_text)).check(matches(withText("Toggle: Torch")));
     }
 
     public void testBatterySettingAppears() {
         onView(withId(R.id.searchEditText)).perform(typeText("batter"));
-        onView(withId(R.id.item_setting_icon)).check(matches(isDisplayed()));
-        onView(withId(R.id.item_setting_name)).check(matches(withText("Setting: Battery")));
+        onView(withId(R.id.result_icon)).check(matches(isDisplayed()));
+        onView(withId(R.id.result_text)).check(matches(withText("Setting: Battery")));
     }
 }

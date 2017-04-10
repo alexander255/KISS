@@ -36,13 +36,13 @@ public class ShortcutsResult extends Result {
     @Override
     public View display(final Context context, int position, View v) {
         if (v == null)
-            v = inflateFromId(context, R.layout.item_shortcut);
+            v = inflate(context);
 
-        TextView appName = (TextView) v.findViewById(R.id.item_app_name);
+        TextView appName = (TextView) v.findViewById(R.id.result_text);
         appName.setText(enrichText(shortcutPojo.displayName, context));
 
-        final ImageView shortcutIcon = (ImageView) v.findViewById(R.id.item_shortcut_icon);
-        final ImageView appIcon = (ImageView) v.findViewById(R.id.item_app_icon);
+        final ImageView shortcutIcon = (ImageView) v.findViewById(R.id.result_icon);
+        final ImageView appIcon = (ImageView) v.findViewById(R.id.result_subicon);
 
         // Retrieve package icon for this shortcut
         final PackageManager packageManager = context.getPackageManager();

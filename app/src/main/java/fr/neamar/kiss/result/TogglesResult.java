@@ -9,6 +9,8 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +21,7 @@ import fr.neamar.kiss.toggles.TogglesHandler;
 
 public class TogglesResult extends Result {
     private final TogglesPojo togglePojo;
+    private Switch toggleButton;
 
     /**
      * Handler for all toggle-related queries
@@ -38,20 +41,23 @@ public class TogglesResult extends Result {
             togglesHandler = new TogglesHandler(context);
 
         if (v == null)
-            v = inflateFromId(context, R.layout.item_toggle);
+            v = inflate(context);
 
         String togglePrefix = "<small><small>" + context.getString(R.string.toggles_prefix) + "</small></small>";
 
-        TextView toggleName = (TextView) v.findViewById(R.id.item_toggle_name);
+        TextView toggleName = (TextView) v.findViewById(R.id.result_text);
         toggleName.setText(TextUtils.concat(Html.fromHtml(togglePrefix), enrichText(togglePojo.displayName, context)));
 
-        ImageView toggleIcon = (ImageView) v.findViewById(R.id.item_toggle_icon);
+        ImageView toggleIcon = (ImageView) v.findViewById(R.id.result_icon);
         toggleIcon.setImageDrawable(context.getResources().getDrawable(togglePojo.icon));
         toggleIcon.setColorFilter(getThemeFillColor(context), Mode.SRC_IN);
 
+        LinearLayout buttonContainer = (LinearLayout) v.findViewById(R.id.result_extras);
+        buttonContainer.removeAllViews();
+
         // Use the handler to check or un-check button
-        final CompoundButton toggleButton = (CompoundButton) v
-                .findViewById(R.id.item_toggle_action_toggle);
+        this.toggleButton = new Switch(context);
+        buttonContainer.addView(this.toggleButton);
 
         //set listener to null to avoid calling the listener of the older toggle item
         //(due to recycling)
@@ -108,15 +114,10 @@ public class TogglesResult extends Result {
 
     @Override
     public void doLaunch(Context context, View v) {
-        CompoundButton toggleButton = null;
-        if (v != null) {
-            toggleButton = (CompoundButton) v.findViewById(R.id.item_toggle_action_toggle);
-        }
-
-        if (toggleButton != null) {
+        if (this.toggleButton != null) {
             // Use the handler to check or un-check button
-            if (toggleButton.isEnabled()) {
-                toggleButton.performClick();
+            if (this.toggleButton.isEnabled()) {
+                this.toggleButton.performClick();
             }
         } else {
             //in case it is pinned on kissbar

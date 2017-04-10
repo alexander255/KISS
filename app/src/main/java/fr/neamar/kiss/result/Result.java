@@ -200,10 +200,10 @@ public abstract class Result {
      * @param id      id to inflate
      * @return the view specified by the id
      */
-    View inflateFromId(Context context, int id) {
+    View inflate(Context context) {
         LayoutInflater vi = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        return vi.inflate(id, null);
+        return vi.inflate(R.layout.result, null);
     }
 
     /**

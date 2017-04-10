@@ -28,13 +28,15 @@ public class PhoneResult extends Result {
     @Override
     public View display(Context context, int position, View v) {
         if (v == null)
-            v = inflateFromId(context, R.layout.item_phone);
+            v = inflate(context);
 
-        TextView appName = (TextView) v.findViewById(R.id.item_phone_text);
+        ImageView icon = (ImageView) v.findViewById(R.id.result_icon);
+        icon.setColorFilter(getThemeFillColor(context), PorterDuff.Mode.SRC_IN);
+        icon.setImageResource(R.drawable.call);
+
+        TextView appName = (TextView) v.findViewById(R.id.result_text);
         String text = context.getString(R.string.ui_item_phone);
         appName.setText(enrichText(String.format(text, "{" + phonePojo.phone + "}"), context));
-
-        ((ImageView) v.findViewById(R.id.item_phone_icon)).setColorFilter(getThemeFillColor(context), PorterDuff.Mode.SRC_IN);
 
         return v;
     }

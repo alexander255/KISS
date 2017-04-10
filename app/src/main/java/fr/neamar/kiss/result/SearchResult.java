@@ -28,10 +28,10 @@ public class SearchResult extends Result {
     @Override
     public View display(Context context, int position, View v) {
         if (v == null)
-            v = inflateFromId(context, R.layout.item_search);
+            v = inflate(context);
 
-        TextView appName = (TextView) v.findViewById(R.id.item_search_text);
-        ImageView image = (ImageView) v.findViewById(R.id.item_search_icon);
+        TextView appName = (TextView) v.findViewById(R.id.result_text);
+        ImageView image = (ImageView) v.findViewById(R.id.result_icon);
         if (searchPojo.direct) {
             String text = context.getString(R.string.ui_item_visit);
             appName.setText(enrichText(String.format(text, "{" + this.pojo.name + "}"), context));

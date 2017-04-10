@@ -10,7 +10,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.preference.PreferenceManager;
 import android.os.Build;
-import android.os.Process;
 import android.os.UserManager;
 import android.util.Log;
 

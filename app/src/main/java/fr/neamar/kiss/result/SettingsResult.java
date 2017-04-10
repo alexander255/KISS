@@ -25,14 +25,19 @@ public class SettingsResult extends Result {
     @Override
     public View display(Context context, int position, View v) {
         if (v == null)
-            v = inflateFromId(context, R.layout.item_setting);
+            v = inflate(context);
 
         String settingPrefix = "<small><small>" + context.getString(R.string.settings_prefix) + "</small></small>";
-        TextView settingName = (TextView) v.findViewById(R.id.item_setting_name);
+        TextView settingName = (TextView) v.findViewById(R.id.result_text);
         settingName.setText(TextUtils.concat(Html.fromHtml(settingPrefix), enrichText(settingPojo.displayName, context)));
 
-        ImageView settingIcon = (ImageView) v.findViewById(R.id.item_setting_icon);
-        settingIcon.setImageDrawable(getDrawable(context));
+        ImageView settingIcon = (ImageView) v.findViewById(R.id.result_icon);
+        Drawable drawable = getDrawable(context);
+        if(drawable != null) {
+            settingIcon.setImageDrawable(drawable);
+        } else {
+            settingIcon.setImageResource(android.R.drawable.ic_menu_manage);
+        }
         settingIcon.setColorFilter(getThemeFillColor(context), Mode.SRC_IN);
 
         return v;

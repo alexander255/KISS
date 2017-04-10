@@ -3,16 +3,25 @@ package fr.neamar.kiss.result;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Shader;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.ContactsContract;
+import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
@@ -26,7 +35,6 @@ import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
 import fr.neamar.kiss.pojo.ContactsPojo;
 import fr.neamar.kiss.searcher.QueryInterface;
-import fr.neamar.kiss.ui.ImprovedQuickContactBadge;
 
 public class ContactsResult extends Result {
     private final ContactsPojo contactPojo;
@@ -41,69 +49,57 @@ public class ContactsResult extends Result {
     @Override
     public View display(Context context, int position, View v) {
         if (v == null)
-            v = inflateFromId(context, R.layout.item_contact);
+            v = inflate(context);
 
         // Contact name
-        TextView contactName = (TextView) v.findViewById(R.id.item_contact_name);
+        TextView contactName = (TextView) v.findViewById(R.id.result_text);
         contactName.setText(enrichText(contactPojo.displayName, context));
 
         // Contact phone
-        TextView contactPhone = (TextView) v.findViewById(R.id.item_contact_phone);
+        TextView contactPhone = (TextView) v.findViewById(R.id.result_subtext);
         contactPhone.setText(contactPojo.phone);
 
         // Contact photo
-        ImprovedQuickContactBadge contactIcon = (ImprovedQuickContactBadge) v
-                .findViewById(R.id.item_contact_icon);
-        contactIcon.setImageDrawable(getDrawable(context));
+        ImageView contactIcon = (ImageView) v.findViewById(R.id.result_icon);
+        contactIcon.setImageDrawable(this.getDrawable(context));
 
-        contactIcon.assignContactUri(Uri.withAppendedPath(
-                ContactsContract.Contacts.CONTENT_LOOKUP_URI,
-                String.valueOf(contactPojo.lookupKey)));
-        contactIcon.setExtraOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                recordLaunch(v.getContext());
-                queryInterface.launchOccurred(-1, ContactsResult.this);
-            }
-        });
-
-        int primaryColor = Color.parseColor(UiTweaks.getPrimaryColor(context));
-        // Phone action
-        ImageButton phoneButton = (ImageButton) v.findViewById(R.id.item_contact_action_phone);
-        phoneButton.setColorFilter(primaryColor);
-        // Message action
-        ImageButton messageButton = (ImageButton) v.findViewById(R.id.item_contact_action_message);
-        messageButton.setColorFilter(primaryColor);
+        LinearLayout buttonContainer = (LinearLayout) v.findViewById(R.id.result_extras);
+        buttonContainer.removeAllViews();
 
         PackageManager pm = context.getPackageManager();
+        if(pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            int primaryColor = Color.parseColor(UiTweaks.getPrimaryColor(context));
 
-        if (pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            phoneButton.setVisibility(View.VISIBLE);
-            messageButton.setVisibility(View.VISIBLE);
+            TypedValue typedValue = new TypedValue();
+            context.getTheme().resolveAttribute(R.attr.appSelectableItemBackground, typedValue, true);
+
+            if(!contactPojo.homeNumber) {
+                // Message action
+                ImageButton messageButton = new ImageButton(context);
+                messageButton.setImageResource(R.drawable.ic_message);
+                messageButton.setColorFilter(primaryColor);
+                messageButton.setBackgroundResource(typedValue.resourceId);
+                messageButton.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        launchMessaging(v.getContext());
+                    }
+                });
+                buttonContainer.addView(messageButton);
+            }
+
+            // Phone action
+            ImageButton phoneButton = new ImageButton(context);
+            phoneButton.setImageResource(R.drawable.ic_phone);
+            phoneButton.setColorFilter(primaryColor);
+            phoneButton.setBackgroundResource(typedValue.resourceId);
             phoneButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     launchCall(v.getContext());
                 }
             });
-
-            messageButton.setOnClickListener(new OnClickListener() {
-
-                @Override
-                public void onClick(View v) {
-                    launchMessaging(v.getContext());
-                }
-            });
-
-            if (contactPojo.homeNumber)
-                messageButton.setVisibility(View.INVISIBLE);
-            else
-                messageButton.setVisibility(View.VISIBLE);
-
-        } else {
-            phoneButton.setVisibility(View.INVISIBLE);
-            messageButton.setVisibility(View.INVISIBLE);
+            buttonContainer.addView(phoneButton);
         }
 
         return v;
@@ -136,8 +132,7 @@ public class ContactsResult extends Result {
     }
 
     @SuppressWarnings("deprecation")
-    @Override
-    public Drawable getDrawable(Context context) {
+    public Drawable getBasicDrawable(Context context) {
         if (contactPojo.icon != null) {
             InputStream inputStream = null;
             try {
@@ -156,6 +151,28 @@ public class ContactsResult extends Result {
 
         // Default icon
         return context.getResources().getDrawable(R.drawable.ic_contact);
+    }
+    
+    @Override
+    public Drawable getDrawable(Context context) {
+        final int width  = 48;
+        final int height = 48;
+        
+        // Convert drawable to bitmap (will also scale the image)
+        Drawable drawable = this.getBasicDrawable(context);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, width, height);
+        drawable.draw(canvas);
+        
+        // Draw circular center of bitmap (based on http://stackoverflow.com/a/18642747/277882)
+        Paint paint = new Paint();
+        paint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+        paint.setAntiAlias(true);
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        canvas = new Canvas(bitmap);
+        canvas.drawCircle(width / 2, height / 2, width < height ? width / 2 : height / 2, paint);
+        return new BitmapDrawable(context.getResources(), bitmap);
     }
 
     @Override
