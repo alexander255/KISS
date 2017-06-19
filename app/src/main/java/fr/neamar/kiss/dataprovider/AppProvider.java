@@ -13,6 +13,7 @@ import android.util.Pair;
 import java.util.ArrayList;
 
 import fr.neamar.kiss.KissApplication;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.loader.LoadAppPojos;
 import fr.neamar.kiss.normalizer.StringNormalizer;
 import fr.neamar.kiss.pojo.AppPojo;
@@ -21,7 +22,6 @@ import fr.neamar.kiss.broadcast.PackageAddedRemovedHandler;
 import fr.neamar.kiss.utils.UserHandle;
 
 public class AppProvider extends Provider<AppPojo> {
-
 	@Override
 	public void onCreate() {
 		if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -112,9 +112,9 @@ public class AppProvider extends Provider<AppPojo> {
         this.initialize(new LoadAppPojos(this));
     }
 
-    public ArrayList<Pojo> getResults(String query) {
+    public ArrayList<Result> getResults(String query) {
         query = StringNormalizer.normalize(query);
-        ArrayList<Pojo> records = new ArrayList<>();
+        ArrayList<Result> records = new ArrayList<>();
 
         int relevance;
         int queryPos;           // The position inside the query
@@ -215,7 +215,7 @@ public class AppProvider extends Provider<AppPojo> {
                     pojo.setTagHighlight(tagStart, tagEnd);
                 }
                 pojo.relevance = relevance;
-                records.add(pojo);
+                records.add(new Result(pojo));
             }
         }
 
@@ -229,18 +229,15 @@ public class AppProvider extends Provider<AppPojo> {
      * @param allowSideEffect do we allow this function to have potential side effect? Set to false to ensure none.
      * @return an AppPojo, or null
      */
-    public Pojo findById(String id, Boolean allowSideEffect) {
-        for (Pojo pojo : pojos) {
+    public Result findById(String id, Boolean allowSideEffect) {
+        for (AppPojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 // Reset displayName to default value
                 if (allowSideEffect) {
                     pojo.displayName = pojo.name;
-                    if (pojo instanceof AppPojo) {
-                        AppPojo appPojo = (AppPojo)pojo;
-                        appPojo.displayTags = appPojo.tags;
-                    }
+                    pojo.displayTags = pojo.tags;
                 }
-                return pojo;
+                return new Result(pojo);
             }
 
         }
@@ -248,26 +245,26 @@ public class AppProvider extends Provider<AppPojo> {
         return null;
     }
 
-    public Pojo findById(String id) {
+    public Result findById(String id) {
         return findById(id, true);
     }
 
-    public Pojo findByName(String name) {
-        for (Pojo pojo : pojos) {
+    public Result findByName(String name) {
+        for (AppPojo pojo : pojos) {
             if (pojo.name.equals(name))
-                return pojo;
+                return new Result(pojo);
         }
         return null;
     }
 
-    public ArrayList<Pojo> getAllApps() {
-        ArrayList<Pojo> records = new ArrayList<>(pojos.size());
+    public ArrayList<Result> getAllApps() {
+        ArrayList<Result> records = new ArrayList<>(pojos.size());
         records.trimToSize();
 
         for (AppPojo pojo : pojos) {
             pojo.displayName = pojo.name;
             pojo.displayTags = pojo.tags;
-            records.add(pojo);
+            records.add(new Result(pojo));
         }
         return records;
     }

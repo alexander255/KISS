@@ -2,6 +2,7 @@ package fr.neamar.kiss.dataprovider;
 
 import java.util.ArrayList;
 
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.loader.LoadShortcutsPojos;
 import fr.neamar.kiss.pojo.Pojo;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
@@ -14,8 +15,8 @@ public class ShortcutsProvider extends Provider<ShortcutsPojo> {
     }
 
     @Override
-    public ArrayList<Pojo> getResults(String query) {
-        ArrayList<Pojo> results = new ArrayList<>();
+    public ArrayList<Result> getResults(String query) {
+        ArrayList<Result> results = new ArrayList<>();
 
         int relevance;
         int matchPositionStart;
@@ -45,29 +46,29 @@ public class ShortcutsProvider extends Provider<ShortcutsPojo> {
             if (relevance > 0) {
                 shortcut.setDisplayNameHighlightRegion(matchPositionStart, matchPositionEnd);
                 shortcut.relevance = relevance;
-                results.add(shortcut);
+                results.add(new Result(shortcut));
             }
         }
 
         return results;
     }
 
-    public Pojo findById(String id) {
+    public Result findById(String id) {
 
         for (Pojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 pojo.displayName = pojo.name;
-                return pojo;
+                return new Result(pojo);
             }
         }
 
         return null;
     }
 
-    public Pojo findByName(String name) {
+    public Result findByName(String name) {
         for (Pojo pojo : pojos) {
             if (pojo.name.equals(name))
-                return pojo;
+                return new Result(pojo);
         }
         return null;
     }

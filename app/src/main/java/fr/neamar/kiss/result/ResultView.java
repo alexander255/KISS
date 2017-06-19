@@ -20,6 +20,7 @@ import fr.neamar.kiss.MainActivity;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.db.DBHelper;
 import fr.neamar.kiss.pojo.AppPojo;
 import fr.neamar.kiss.pojo.ContactsPojo;
@@ -31,27 +32,28 @@ import fr.neamar.kiss.pojo.ShortcutsPojo;
 import fr.neamar.kiss.pojo.TogglesPojo;
 import fr.neamar.kiss.searcher.QueryInterface;
 
-public abstract class Result {
+public abstract class ResultView {
     /**
      * Current information pojo
      */
+    Result result = null;
     Pojo pojo = null;
 
-    public static Result fromPojo(QueryInterface parent, Pojo pojo) {
-        if (pojo instanceof AppPojo)
-            return new AppResult((AppPojo) pojo);
-        else if (pojo instanceof ContactsPojo)
-            return new ContactsResult(parent, (ContactsPojo) pojo);
-        else if (pojo instanceof SearchPojo)
-            return new SearchResult((SearchPojo) pojo);
-        else if (pojo instanceof SettingsPojo)
-            return new SettingsResult((SettingsPojo) pojo);
-        else if (pojo instanceof TogglesPojo)
-            return new TogglesResult((TogglesPojo) pojo);
-        else if (pojo instanceof PhonePojo)
-            return new PhoneResult((PhonePojo) pojo);
-        else if (pojo instanceof ShortcutsPojo)
-            return new ShortcutsResult((ShortcutsPojo) pojo);
+    public static ResultView fromResult(QueryInterface parent, Result result) {
+        if (result.pojo instanceof AppPojo)
+            return new AppResult((AppPojo) result.pojo, result);
+        else if (result.pojo instanceof ContactsPojo)
+            return new ContactsResult(parent, (ContactsPojo) result.pojo, result);
+        else if (result.pojo instanceof SearchPojo)
+            return new SearchResult((SearchPojo) result.pojo, result);
+        else if (result.pojo instanceof SettingsPojo)
+            return new SettingsResult((SettingsPojo) result.pojo, result);
+        else if (result.pojo instanceof TogglesPojo)
+            return new TogglesResult((TogglesPojo) result.pojo, result);
+        else if (result.pojo instanceof PhonePojo)
+            return new PhoneResult((PhonePojo) result.pojo, result);
+        else if (result.pojo instanceof ShortcutsPojo)
+            return new ShortcutsResult((ShortcutsPojo) result.pojo, result);
 
 
         throw new RuntimeException("Unable to create a result from POJO");
@@ -83,14 +85,14 @@ public abstract class Result {
         return menu;
     }
 
-    /**
-     * Default popup menu implementation, can be overridden by children class to display a more specific menu
-     *
-     * @return an inflated, listener-free PopupMenu
-     */
-    PopupMenu buildPopupMenu(Context context, final RecordAdapter parent, View parentView) {
-        return inflatePopupMenu(R.menu.menu_item_default, context, parentView);
-    }
+	/**
+	 * Default popup menu implementation, can be overridden by children class to display a more specific menu
+	 *
+	 * @return an inflated, listener-free PopupMenu
+	 */
+	PopupMenu buildPopupMenu(Context context, final RecordAdapter parent, View parentView) {
+		return inflatePopupMenu(R.menu.menu_item_default, context, parentView);
+	}
 
     protected PopupMenu inflatePopupMenu(@MenuRes int menuId, Context context, View parentView) {
         PopupMenu menu = new PopupMenu(context, parentView);
@@ -154,7 +156,7 @@ public abstract class Result {
      */
     private void removeItem(Context context, RecordAdapter parent) {
         Toast.makeText(context, R.string.removed_item, Toast.LENGTH_SHORT).show();
-        parent.removeResult(this);
+        parent.removeResultView(this);
     }
 
     public final void launch(Context context, View v) {

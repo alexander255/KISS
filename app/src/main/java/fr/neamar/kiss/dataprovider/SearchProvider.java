@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.loader.LoadSearchPojos;
 import fr.neamar.kiss.pojo.Pojo;
 import fr.neamar.kiss.pojo.SearchPojo;
@@ -40,9 +41,9 @@ public class SearchProvider extends Provider<SearchPojo> {
         this.initialize(new LoadSearchPojos(this));
     }
 
-    public ArrayList<Pojo> getResults(String query) {
+    public ArrayList<Result> getResults(String query) {
 
-        ArrayList<Pojo> pojos = new ArrayList<>();
+        ArrayList<Result> pojos = new ArrayList<>();
         Set<String> selectedProviders = new TreeSet<>();
         selectedProviders.addAll(PreferenceManager.getDefaultSharedPreferences(this).getStringSet("search-providers", new HashSet<>(Arrays.asList("Google"))));
         for (String searchProvider : selectedProviders) {
@@ -51,7 +52,7 @@ public class SearchProvider extends Provider<SearchPojo> {
             pojo.relevance = 10;
             pojo.url = searchProviderUrls.get(searchProvider);
             pojo.name = searchProvider;
-            pojos.add(pojo);
+            pojos.add(new Result(pojo));
         }
 
         Matcher m = p.matcher(query);
@@ -64,7 +65,7 @@ public class SearchProvider extends Provider<SearchPojo> {
                 pojo.name = guessedUrl;
                 pojo.url = guessedUrl;
                 pojo.direct = true;
-                pojos.add(pojo);
+                pojos.add(new Result(pojo));
             }
         }
         return pojos;

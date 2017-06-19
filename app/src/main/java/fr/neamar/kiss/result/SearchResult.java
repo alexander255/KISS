@@ -15,14 +15,16 @@ import android.widget.TextView;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.pojo.SearchPojo;
 
-public class SearchResult extends Result {
+public class SearchResult extends ResultView {
     private final SearchPojo searchPojo;
 
-    public SearchResult(SearchPojo searchPojo) {
+    public SearchResult(SearchPojo searchPojo, Result result) {
         super();
         this.pojo = this.searchPojo = searchPojo;
+        this.result = result;
     }
 
     @Override

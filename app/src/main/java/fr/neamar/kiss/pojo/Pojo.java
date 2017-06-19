@@ -32,6 +32,7 @@ public abstract class Pojo {
     public String tags;
     // Variable to store the formated (user selection in bold) tag
     public String displayTags = "";
+    
 
     /**
      * Map a position in the normalized name to a position in the standard name string

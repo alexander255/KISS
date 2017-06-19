@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import fr.neamar.kiss.R;
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.TagsHandler;
 import fr.neamar.kiss.pojo.AppPojo;
@@ -28,11 +29,12 @@ public class LoadAppPojos extends LoadPojos<AppPojo> {
     private TagsHandler tagsHandler;
     private static SharedPreferences prefs;
 
-    public LoadAppPojos(Context context) {
-        super(context, "app://");
-        prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        tagsHandler = KissApplication.getDataHandler(context).getTagsHandler();
-    }
+	public LoadAppPojos(Context context) {
+		super(context, "app://");
+
+		prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		tagsHandler = KissApplication.getDataHandler(context).getTagsHandler();
+	}
 
     @Override
     protected ArrayList<AppPojo> doInBackground(Void... params) {

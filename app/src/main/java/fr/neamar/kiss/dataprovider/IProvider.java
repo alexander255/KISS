@@ -2,18 +2,18 @@ package fr.neamar.kiss.dataprovider;
 
 import java.util.ArrayList;
 
-import fr.neamar.kiss.pojo.Pojo;
+import fr.neamar.kiss.api.provider.Result;
 
 /**
  * Public interface exposed by every KISS data provider
  */
-public interface IProvider {
+public interface IProvider extends fr.neamar.kiss.api.provider.IProvider {
     /**
      * Synchronously retrieve list of search results for the given query string
      *
      * @param s Some string query (usually provided by an user)
      */
-    ArrayList<Pojo> getResults(String s);
+    ArrayList<Result> getResults(String s);
 
     /**
      * Reload the data stored in this provider
@@ -49,5 +49,5 @@ public interface IProvider {
      * @param id id we're looking for
      * @return null if not found
      */
-    Pojo findById(String id);
+    Result findById(String id);
 }

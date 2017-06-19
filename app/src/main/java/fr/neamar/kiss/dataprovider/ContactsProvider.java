@@ -6,6 +6,7 @@ import android.provider.ContactsContract;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.loader.LoadContactsPojos;
 import fr.neamar.kiss.normalizer.PhoneNormalizer;
 import fr.neamar.kiss.normalizer.StringNormalizer;
@@ -42,9 +43,9 @@ public class ContactsProvider extends Provider<ContactsPojo> {
         getContentResolver().unregisterContentObserver(cObserver);
     }
 
-    public ArrayList<Pojo> getResults(String query) {
+    public ArrayList<Result> getResults(String query) {
         query = StringNormalizer.normalize(query);
-        ArrayList<Pojo> results = new ArrayList<>();
+        ArrayList<Result> results = new ArrayList<>();
 
         // Search people with composed names, e.g "jean-marie"
         // (not part of the StringNormalizer class, since we want to keep dashes on other providers)
@@ -101,7 +102,7 @@ public class ContactsProvider extends Provider<ContactsPojo> {
                 if (!alias)
                     contact.setDisplayNameHighlightRegion(matchPositionStart, matchPositionEnd);
                 contact.relevance = relevance;
-                results.add(contact);
+                results.add(new Result(contact));
 
                 // Circuit-breaker to avoid spending too much time
                 // building results
@@ -118,21 +119,21 @@ public class ContactsProvider extends Provider<ContactsPojo> {
         return results;
     }
 
-    public Pojo findById(String id) {
+    public Result findById(String id) {
         for (Pojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 pojo.displayName = pojo.name;
-                return pojo;
+                return new Result(pojo);
             }
         }
 
         return null;
     }
 
-    public Pojo findByName(String name) {
+    public Result findByName(String name) {
         for (Pojo pojo : pojos) {
             if (pojo.name.equals(name))
-                return pojo;
+                return new Result(pojo);
         }
         return null;
     }
@@ -144,12 +145,12 @@ public class ContactsProvider extends Provider<ContactsPojo> {
      * @param phoneNumber phone number to find (will be normalized)
      * @return a contactpojo, or null.
      */
-    public ContactsPojo findByPhone(String phoneNumber) {
+    public Result findByPhone(String phoneNumber) {
         String simplifiedPhoneNumber = PhoneNormalizer.simplifyPhoneNumber(phoneNumber);
 
         for (ContactsPojo pojo : pojos) {
             if (pojo.phoneSimplified.equals(simplifiedPhoneNumber)) {
-                return pojo;
+                return new Result(pojo);
             }
         }
 

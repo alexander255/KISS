@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.dataprovider.AppProvider;
 import fr.neamar.kiss.dataprovider.ContactsProvider;
 import fr.neamar.kiss.dataprovider.IProvider;
@@ -28,8 +29,6 @@ import fr.neamar.kiss.dataprovider.ShortcutsProvider;
 import fr.neamar.kiss.db.DBHelper;
 import fr.neamar.kiss.db.ShortcutRecord;
 import fr.neamar.kiss.db.ValuedHistoryRecord;
-import fr.neamar.kiss.pojo.Pojo;
-import fr.neamar.kiss.pojo.PojoComparator;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
 import fr.neamar.kiss.utils.UserHandle;
 
@@ -236,7 +235,7 @@ public class DataHandler extends BroadcastReceiver
      * @param query   query to run
      * @return ordered list of records
      */
-    public ArrayList<Pojo> getResults(Context context, String query) {
+    public ArrayList<Result> getResults(Context context, String query) {
         query = query.toLowerCase().trim().replaceAll("<", "&lt;");
 
         currentQuery = query;
@@ -250,28 +249,28 @@ public class DataHandler extends BroadcastReceiver
         }
 
         // Ask all providers for data
-        ArrayList<Pojo> allPojos = new ArrayList<>();
+        ArrayList<Result> allResults = new ArrayList<>();
 
         for (ProviderEntry entry : this.providers.values()) {
             if (entry.provider != null) {
                 // Retrieve results for query:
-                List<Pojo> pojos = entry.provider.getResults(query);
+                List<Result> results = entry.provider.getResults(query);
 
                 // Add results to list
-                for (Pojo pojo : pojos) {
+                for (Result result : results) {
                     // Give a boost if item was previously selected for this query
-                    if (knownIds.containsKey(pojo.id)) {
-                        pojo.relevance += 25 * Math.min(5, knownIds.get(pojo.id));
+                    if (knownIds.containsKey(result.id)) {
+                        result.relevance += 25 * Math.min(5, knownIds.get(result.id));
                     }
-                    allPojos.add(pojo);
+                    allResults.add(result);
                 }
             }
         }
 
         // Sort records according to relevance
-        Collections.sort(allPojos, new PojoComparator());
+        Collections.sort(allResults, new Result.RelevanceComparator());
 
-        return allPojos;
+        return allResults;
     }
 
     /**
@@ -284,12 +283,12 @@ public class DataHandler extends BroadcastReceiver
      * @param itemCount      max number of items to retrieve, total number may be less (search or calls are not returned for instance)
      * @param smartHistory   Recency vs Frecency
      * @param itemsToExclude Items to exclude from history
-     * @return pojos in recent history
+     * @return list of items that are part of the recent history
      */
-    public ArrayList<Pojo> getHistory(Context context, int itemCount, boolean smartHistory, ArrayList<Pojo> itemsToExclude) {
+    public ArrayList<Result> getHistory(Context context, int itemCount, boolean smartHistory, ArrayList<Result> itemsToExclude) {
         // Pre-allocate array slots that are likely to be used based on the current maximum item
         // count
-        ArrayList<Pojo> history = new ArrayList<>(Math.min(itemCount, 256));
+        ArrayList<Result> history = new ArrayList<>(Math.min(itemCount, 256));
 
         // Read history
         List<ValuedHistoryRecord> ids = DBHelper.getHistory(context, itemCount, smartHistory);
@@ -297,19 +296,19 @@ public class DataHandler extends BroadcastReceiver
         // Find associated items
         for (int i = 0; i < ids.size(); i++) {
             // Ask all providers if they know this id
-            Pojo pojo = getPojo(ids.get(i).record);
-            if (pojo != null) {
-                //Look if the pojo should get excluded
+            Result result = getResult(ids.get(i).record);
+            if (result != null) {
+                //Look if the result item should get excluded
                 boolean exclude = false;
                 for (int j = 0; j < itemsToExclude.size(); j++) {
-                    if (itemsToExclude.get(j).id.equals(pojo.id)) {
+                    if (itemsToExclude.get(j).id.equals(result.id)) {
                         exclude = true;
                         break;
                     }
                 }
 
                 if (!exclude) {
-                    history.add(pojo);
+                    history.add(result);
                 }
             }
         }
@@ -399,9 +398,9 @@ public class DataHandler extends BroadcastReceiver
     /**
      * Return all applications
      *
-     * @return pojos for all applications
+     * @return list of all applications
      */
-    public ArrayList<Pojo> getApplications() {
+    public ArrayList<Result> getApplications() {
         return this.getAppProvider().getAllApps();
     }
 
@@ -425,10 +424,10 @@ public class DataHandler extends BroadcastReceiver
      * May return null if no items were ever selected (app first use)
      *
      * @param limit max number of items to retrieve. You may end with less items if favorites contains non existing items.
-     * @return favorites' pojo
+     * @return list of all favourites
      */
-    public ArrayList<Pojo> getFavorites(int limit) {
-        ArrayList<Pojo> favorites = new ArrayList<>(limit);
+    public ArrayList<Result> getFavorites(int limit) {
+        ArrayList<Result> favorites = new ArrayList<>(limit);
 
         String favApps = PreferenceManager.getDefaultSharedPreferences(this.context).
                 getString("favorite-apps-list", "");
@@ -436,9 +435,9 @@ public class DataHandler extends BroadcastReceiver
 
         // Find associated items
         for (int i = 0; i < favAppsList.size(); i++) {
-            Pojo pojo = getPojo(favAppsList.get(i));
-            if (pojo != null) {
-                favorites.add(pojo);
+            Result result = getResult(favAppsList.get(i));
+            if (result != null) {
+                favorites.add(result);
             }
             if (favorites.size() >= limit) {
                 break;
@@ -512,9 +511,9 @@ public class DataHandler extends BroadcastReceiver
 	}
 
     /**
-     * Insert specified ID (probably a pojo.id) into history
+     * Insert specified ID (probably a `result.id`) into history
      *
-     * @param id pojo.id of item to record
+     * @param id `result.id` of item to record
      */
     public void addToHistory(String id) {
         boolean frozen = PreferenceManager.getDefaultSharedPreferences(context).
@@ -525,7 +524,7 @@ public class DataHandler extends BroadcastReceiver
         }
     }
 
-    private Pojo getPojo(String id) {
+    private Result getResult(String id) {
         // Ask all providers if they know this id
         for (ProviderEntry entry : this.providers.values()) {
             if (entry.provider != null && entry.provider.mayFindById(id)) {

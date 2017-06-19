@@ -15,14 +15,16 @@ import android.widget.TextView;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.pojo.PhonePojo;
 
-public class PhoneResult extends Result {
+public class PhoneResult extends ResultView {
     private final PhonePojo phonePojo;
 
-    public PhoneResult(PhonePojo phonePojo) {
+    public PhoneResult(PhonePojo phonePojo, Result result) {
         super();
         this.pojo = this.phonePojo = phonePojo;
+        this.result = result;
     }
 
     @Override

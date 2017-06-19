@@ -33,16 +33,18 @@ import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.pojo.ContactsPojo;
 import fr.neamar.kiss.searcher.QueryInterface;
 
-public class ContactsResult extends Result {
+public class ContactsResult extends ResultView {
     private final ContactsPojo contactPojo;
     private final QueryInterface queryInterface;
 
-    public ContactsResult(QueryInterface queryInterface, ContactsPojo contactPojo) {
+    public ContactsResult(QueryInterface queryInterface, ContactsPojo contactPojo, Result result) {
         super();
         this.pojo = this.contactPojo = contactPojo;
+        this.result = result;
         this.queryInterface = queryInterface;
     }
 

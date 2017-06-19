@@ -8,8 +8,8 @@ import android.util.Log;
 
 import fr.neamar.kiss.DataHandler;
 import fr.neamar.kiss.KissApplication;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.dataprovider.ContactsProvider;
-import fr.neamar.kiss.pojo.ContactsPojo;
 
 public class IncomingCallHandler extends BroadcastReceiver {
 
@@ -33,9 +33,9 @@ public class IncomingCallHandler extends BroadcastReceiver {
                     return;
                 }
 
-                ContactsPojo contactPojo = contactsProvider.findByPhone(phoneNumber);
-                if (contactPojo != null) {
-                    dataHandler.addToHistory(contactPojo.id);
+                Result result = contactsProvider.findByPhone(phoneNumber);
+                if (result != null) {
+                    dataHandler.addToHistory(result.id);
                 }
             }
         } catch (Exception e) {

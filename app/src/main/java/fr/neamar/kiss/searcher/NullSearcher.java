@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.neamar.kiss.MainActivity;
-import fr.neamar.kiss.pojo.Pojo;
+import fr.neamar.kiss.api.provider.Result;
 
 /**
  * Retrieve pojos from history
@@ -16,7 +16,7 @@ public class NullSearcher extends Searcher {
     }
 
     @Override
-    protected List<Pojo> doInBackground(Void... voids) {
+    protected List<Result> doInBackground(Void... voids) {
         return new ArrayList<>();
     }
 }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.neamar.kiss.MainActivity;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.loader.LoadPojos;
 import fr.neamar.kiss.pojo.Pojo;
 
@@ -56,7 +57,7 @@ public abstract class Provider<T extends Pojo> extends Service implements IProvi
      *
      * @param s Some string query (usually provided by an user)
      */
-    public abstract ArrayList<Pojo> getResults(String s);
+    public abstract ArrayList<Result> getResults(String s);
 
     public abstract void reload();
 
@@ -94,7 +95,7 @@ public abstract class Provider<T extends Pojo> extends Service implements IProvi
      * @param id id we're looking for
      * @return null if not found
      */
-    public Pojo findById(String id) {
+    public Result findById(String id) {
         return null;
     }
 
@@ -121,4 +122,10 @@ public abstract class Provider<T extends Pojo> extends Service implements IProvi
     public IBinder onBind(Intent intent) {
         return this.binder;
     }
+    
+	@Override
+	public IBinder asBinder() {
+		//XXX: Possibly implement a real binder for out app providers!?
+		return null;
+	}
 }

@@ -23,14 +23,16 @@ import fr.neamar.kiss.DataHandler;
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
 
-public class ShortcutsResult extends Result {
+public class ShortcutsResult extends ResultView {
     private final ShortcutsPojo shortcutPojo;
 
-    public ShortcutsResult(ShortcutsPojo shortcutPojo) {
+    public ShortcutsResult(ShortcutsPojo shortcutPojo, Result result) {
         super();
         this.pojo = this.shortcutPojo = shortcutPojo;
+        this.result = result;
     }
 
     @Override
@@ -111,7 +113,7 @@ public class ShortcutsResult extends Result {
             case R.id.item_app_uninstall:
                 launchUninstall(context, shortcutPojo);
                 // Also remove item, since it will be uninstalled
-                parent.removeResult(this);
+                parent.removeResultView(this);
                 return true;
 
         }

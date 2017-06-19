@@ -7,6 +7,7 @@ import android.util.Log;
 
 import fr.neamar.kiss.DataHandler;
 import fr.neamar.kiss.KissApplication;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.dataprovider.ShortcutsProvider;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
 
@@ -24,13 +25,13 @@ public class UninstallShortcutHandler extends BroadcastReceiver {
         String name = data.getStringExtra(Intent.EXTRA_SHORTCUT_NAME);
         Log.d("onReceive", "Uninstall shortcut " + name);
 
-        ShortcutsPojo pojo = (ShortcutsPojo) sp.findByName(name);
-        if (pojo == null) {
+        Result result = sp.findByName(name);
+        if (result == null) {
             Log.d("onReceive", "Shortcut " + name + " not found");
             return;
         }
 
-        dh.removeShortcut(pojo);
+        dh.removeShortcut((ShortcutsPojo) result.pojo);
 
     }
 

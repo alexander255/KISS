@@ -8,7 +8,7 @@ import java.util.List;
 
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.MainActivity;
-import fr.neamar.kiss.pojo.Pojo;
+import fr.neamar.kiss.api.provider.Result;
 
 /**
  * Retrieve pojos from history
@@ -22,7 +22,7 @@ public class HistorySearcher extends Searcher {
     }
 
     @Override
-    protected List<Pojo> doInBackground(Void... voids) {
+    protected List<Result> doInBackground(Void... voids) {
         // Ask for records
         boolean smartHistory = !prefs.getString("history-mode", "recency").equals("recency");
         boolean excludeFavorites = prefs.getBoolean("exclude-favorites", false);
@@ -32,11 +32,11 @@ public class HistorySearcher extends Searcher {
         int maxRecords = (new Double(prefs.getString("number-of-display-elements", String.valueOf(DEFAULT_MAX_RESULTS)))).intValue();
 
         //Gather favorites
-        ArrayList<Pojo> favoritesPojo = new ArrayList<Pojo>(0);
+        ArrayList<Result> favoriteResults = new ArrayList<Result>(0);
         if(excludeFavorites){
-            favoritesPojo = KissApplication.getDataHandler(activity).getFavorites(activity.tryToRetrieve);
+            favoriteResults = KissApplication.getDataHandler(activity).getFavorites(activity.tryToRetrieve);
         }
 
-        return KissApplication.getDataHandler(activity).getHistory(activity, maxRecords, smartHistory, favoritesPojo);
+        return KissApplication.getDataHandler(activity).getHistory(activity, maxRecords, smartHistory, favoriteResults);
     }
 }

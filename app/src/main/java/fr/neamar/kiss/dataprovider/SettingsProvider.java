@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import fr.neamar.kiss.R;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.loader.LoadSettingsPojos;
 import fr.neamar.kiss.pojo.Pojo;
 import fr.neamar.kiss.pojo.SettingsPojo;
@@ -18,8 +19,8 @@ public class SettingsProvider extends Provider<SettingsPojo> {
         settingName = this.getString(R.string.settings_prefix).toLowerCase();
     }
 
-    public ArrayList<Pojo> getResults(String query) {
-        ArrayList<Pojo> results = new ArrayList<>();
+    public ArrayList<Result> getResults(String query) {
+        ArrayList<Result> results = new ArrayList<>();
 
         int relevance;
         String settingNameLowerCased;
@@ -39,18 +40,18 @@ public class SettingsProvider extends Provider<SettingsPojo> {
                 setting.displayName = setting.name.replaceFirst(
                         "(?i)(" + Pattern.quote(query) + ")", "{$1}");
                 setting.relevance = relevance;
-                results.add(setting);
+                results.add(new Result(setting));
             }
         }
 
         return results;
     }
 
-    public Pojo findById(String id) {
+    public Result findById(String id) {
         for (Pojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 pojo.displayName = pojo.name;
-                return pojo;
+                return new Result(pojo);
             }
         }
 

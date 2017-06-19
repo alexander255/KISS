@@ -8,8 +8,8 @@ import android.telephony.SmsMessage;
 
 import fr.neamar.kiss.DataHandler;
 import fr.neamar.kiss.KissApplication;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.dataprovider.ContactsProvider;
-import fr.neamar.kiss.pojo.ContactsPojo;
 
 public class IncomingSmsHandler extends BroadcastReceiver {
     @Override
@@ -43,10 +43,10 @@ public class IncomingSmsHandler extends BroadcastReceiver {
         SmsMessage msg = SmsMessage.createFromPdu((byte[]) pdus[0]);
 
         // Now, retrieve the contact by its lookup key on our contactsProvider
-        ContactsPojo contactPojo = contactsProvider.findByPhone(msg.getOriginatingAddress());
-        if (contactPojo != null) {
+        Result result = contactsProvider.findByPhone(msg.getOriginatingAddress());
+        if (result != null) {
             // We have a match!
-            dataHandler.addToHistory(contactPojo.id);
+            dataHandler.addToHistory(result.id);
         }
     }
 }

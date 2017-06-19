@@ -8,10 +8,10 @@ import java.util.Collection;
 import java.util.List;
 
 import fr.neamar.kiss.MainActivity;
-import fr.neamar.kiss.pojo.Pojo;
-import fr.neamar.kiss.result.Result;
+import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.result.ResultView;
 
-public abstract class Searcher extends AsyncTask<Void, Void, List<Pojo>> {
+public abstract class Searcher extends AsyncTask<Void, Void, List<Result>> {
     protected static final int DEFAULT_MAX_RESULTS = 25;
 
     final MainActivity activity;
@@ -22,18 +22,18 @@ public abstract class Searcher extends AsyncTask<Void, Void, List<Pojo>> {
     }
 
     @Override
-    protected void onPostExecute(List<Pojo> pojos) {
-        super.onPostExecute(pojos);
+    protected void onPostExecute(List<Result> results) {
+        super.onPostExecute(results);
         activity.adapter.clear();
 
-        Collection<Result> results = new ArrayList<>();
+        Collection<ResultView> resultViews = new ArrayList<>();
 
-        if (pojos != null) {
-            for (int i = pojos.size() - 1; i >= 0; i--) {
-                results.add(Result.fromPojo(activity, pojos.get(i)));
+        if (resultViews != null) {
+            for (int i = results.size() - 1; i >= 0; i--) {
+                resultViews.add(ResultView.fromResult(activity, results.get(i)));
             }
 
-            activity.adapter.addAll(results);
+            activity.adapter.addAll(resultViews);
         }
         activity.resetTask();
     }

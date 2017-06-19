@@ -30,19 +30,21 @@ import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.MainActivity;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.pojo.AppPojo;
 import fr.neamar.kiss.utils.SpaceTokenizer;
 
-public class AppResult extends Result {
+public class AppResult extends ResultView {
     private final AppPojo appPojo;
 
     private final ComponentName className;
 
     private Drawable icon = null;
 
-    public AppResult(AppPojo appPojo) {
+    public AppResult(AppPojo appPojo, Result result) {
         super();
         this.pojo = this.appPojo = appPojo;
+        this.result = result;
 
         className = new ComponentName(appPojo.packageName, appPojo.activityName);
     }
@@ -142,7 +144,7 @@ public class AppResult extends Result {
                 return true;
             case R.id.item_exclude:
                 // remove item since it will be hiddden
-                parent.removeResult(this);
+                parent.removeResultView(this);
                 excludeFromAppList(context, appPojo);
                 return true;
             case R.id.item_tags_edit:

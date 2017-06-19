@@ -43,11 +43,11 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.broadcast.IncomingCallHandler;
 import fr.neamar.kiss.broadcast.IncomingSmsHandler;
 import fr.neamar.kiss.dataprovider.AppProvider;
-import fr.neamar.kiss.pojo.Pojo;
-import fr.neamar.kiss.result.Result;
+import fr.neamar.kiss.result.ResultView;
 import fr.neamar.kiss.searcher.ApplicationsSearcher;
 import fr.neamar.kiss.searcher.HistorySearcher;
 import fr.neamar.kiss.searcher.NullSearcher;
@@ -231,7 +231,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         this.listEmpty = this.findViewById(android.R.id.empty);
 
         // Create adapter for records
-        this.adapter = new RecordAdapter(this, this, R.layout.result, new ArrayList<Result>());
+        this.adapter = new RecordAdapter(this, this, R.layout.result, new ArrayList<ResultView>());
         this.list.setAdapter(this.adapter);
 
         this.list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -331,16 +331,16 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
             public boolean onLongClick(View view) {
 
                 int favNumber = Integer.parseInt((String) view.getTag());
-                ArrayList<Pojo> favorites = KissApplication.getDataHandler(MainActivity.this).getFavorites(tryToRetrieve);
+                ArrayList<Result> favorites = KissApplication.getDataHandler(MainActivity.this).getFavorites(tryToRetrieve);
                 if (favNumber >= favorites.size()) {
                     // Clicking on a favorite before everything is loaded.
                     Log.i(TAG, "Long clicking on an unitialized favorite.");
                     return false;
                 }
                 // Favorites handling
-                Pojo pojo = favorites.get(favNumber);
-                final Result result = Result.fromPojo(MainActivity.this, pojo);
-                result.getPopupMenu(MainActivity.this, adapter, view).show();
+                Result result = favorites.get(favNumber);
+                final ResultView resultView = ResultView.fromResult(MainActivity.this, result);
+                resultView.getPopupMenu(MainActivity.this, adapter, view).show();
                 return true;
             }
         };
@@ -589,17 +589,17 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         displayKissBar(false);
 
         int favNumber = Integer.parseInt((String) favorite.getTag());
-        ArrayList<Pojo> favorites = KissApplication.getDataHandler(MainActivity.this).getFavorites(tryToRetrieve);
+        ArrayList<Result> favorites = KissApplication.getDataHandler(MainActivity.this).getFavorites(tryToRetrieve);
         if (favNumber >= favorites.size()) {
             // Clicking on a favorite before everything is loaded.
             Log.i(TAG, "Clicking on an unitialized favorite.");
             return;
         }
         // Favorites handling
-        Pojo pojo = favorites.get(favNumber);
-        final Result result = Result.fromPojo(MainActivity.this, pojo);
+        Result result = favorites.get(favNumber);
+        final ResultView resultView = ResultView.fromResult(MainActivity.this, result);
 
-        result.fastLaunch(MainActivity.this, favorite);
+        resultView.fastLaunch(MainActivity.this, favorite);
     }
 
     private void displayClearOnInput() {
@@ -713,10 +713,10 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
     public void displayFavorites() {
         int[] favoritesIds = favoritesKissBar.getVisibility() == View.VISIBLE ? favsIds : favBarIds;
 
-        ArrayList<Pojo> favoritesPojo = KissApplication.getDataHandler(MainActivity.this)
+        ArrayList<Result> favoriteResults = KissApplication.getDataHandler(MainActivity.this)
                 .getFavorites(tryToRetrieve);
 
-        if (favoritesPojo.size() == 0) {
+        if (favoriteResults.size() == 0) {
             int noFavCnt = prefs.getInt("no-favorites-tip", 0);
             if (noFavCnt < 3 && !prefs.getBoolean("enable-favorites-bar", false)) {
                 Toast toast = Toast.makeText(MainActivity.this, getString(R.string.no_favorites), Toast.LENGTH_SHORT);
@@ -727,13 +727,13 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         }
 
         // Don't look for items after favIds length, we won't be able to display them
-        for (int i = 0; i < Math.min(favoritesIds.length, favoritesPojo.size()); i++) {
-            Pojo pojo = favoritesPojo.get(i);
+        for (int i = 0; i < Math.min(favoritesIds.length, favoriteResults.size()); i++) {
+            Result result = favoriteResults.get(i);
 
             ImageView image = (ImageView) findViewById(favoritesIds[i]);
 
-            Result result = Result.fromPojo(MainActivity.this, pojo);
-            Drawable drawable = result.getDrawable(MainActivity.this);
+            ResultView resultView = ResultView.fromResult(MainActivity.this, result);
+            Drawable drawable = resultView.getDrawable(MainActivity.this);
             if (drawable != null) {
                 image.setImageDrawable(drawable);
             } else {
@@ -743,11 +743,11 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
             }
 
             image.setVisibility(View.VISIBLE);
-            image.setContentDescription(pojo.displayName);
+            image.setContentDescription(result.name);
         }
 
         // Hide empty favorites (not enough favorites yet)
-        for (int i = favoritesPojo.size(); i < favoritesIds.length; i++) {
+        for (int i = favoriteResults.size(); i < favoritesIds.length; i++) {
             findViewById(favoritesIds[i]).setVisibility(View.GONE);
         }
     }
@@ -797,7 +797,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
      * Call this function when we're leaving the activity We can't use
      * onPause(), since it may be called for a configuration change
      */
-    public void launchOccurred(int index, Result result) {
+    public void launchOccurred(int index, ResultView resultView) {
         // We selected an item on the list,
         // now we can cleanup the filter:
         if (!searchEditText.getText().toString().equals("")) {

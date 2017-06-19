@@ -12,14 +12,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import fr.neamar.kiss.R;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.pojo.SettingsPojo;
 
-public class SettingsResult extends Result {
+public class SettingsResult extends ResultView {
     private final SettingsPojo settingPojo;
 
-    public SettingsResult(SettingsPojo settingPojo) {
+    public SettingsResult(SettingsPojo settingPojo, Result result) {
         super();
         this.pojo = this.settingPojo = settingPojo;
+        this.result = result;
     }
 
     @Override

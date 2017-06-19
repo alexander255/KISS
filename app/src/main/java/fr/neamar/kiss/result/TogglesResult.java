@@ -16,10 +16,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import fr.neamar.kiss.R;
+import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.pojo.TogglesPojo;
 import fr.neamar.kiss.toggles.TogglesHandler;
 
-public class TogglesResult extends Result {
+public class TogglesResult extends ResultView {
     private final TogglesPojo togglePojo;
     private Switch toggleButton;
 
@@ -28,9 +29,10 @@ public class TogglesResult extends Result {
      */
     private TogglesHandler togglesHandler = null;
 
-    public TogglesResult(TogglesPojo togglePojo) {
+    public TogglesResult(TogglesPojo togglePojo, Result result) {
         super();
         this.pojo = this.togglePojo = togglePojo;
+        this.result = result;
     }
 
     @SuppressWarnings({"ResourceType", "deprecation"})
