@@ -86,18 +86,18 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
     /**
      * IDs for the favorites buttons
      */
-    private final int[] favsIds = new int[]{R.id.favorite0, R.id.favorite1, R.id.favorite2, R.id.favorite3, R.id.favorite4, R.id.favorite5};
+    public static final int[] FAVS_IDS = new int[]{R.id.favorite0, R.id.favorite1, R.id.favorite2, R.id.favorite3, R.id.favorite4, R.id.favorite5};
     /**
      * IDs for the favorites buttons on the quickbar
      */
 
-    private final int[] favBarIds = new int[]{R.id.favoriteBar0, R.id.favoriteBar1, R.id.favoriteBar2, R.id.favoriteBar3, R.id.favoriteBar4, R.id.favoriteBar5};
+    public static final int[] FAV_BAR_IDS = new int[]{R.id.favoriteBar0, R.id.favoriteBar1, R.id.favoriteBar2, R.id.favoriteBar3, R.id.favoriteBar4, R.id.favoriteBar5};
 
     /**
      * Number of favorites to retrieve.
      * We need to pad this number to account for removed items still in history
      */
-    public final int tryToRetrieve = favsIds.length + 2;
+    public final int tryToRetrieve = FAVS_IDS.length + 2;
     /**
      * Adapter to display records
      */
@@ -157,6 +157,8 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        KissApplication.setMainActivity(this);
+        
         // Initialize UI
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -344,10 +346,10 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
                 return true;
             }
         };
-        for (int id : favBarIds) {
+        for (int id : FAV_BAR_IDS) {
             findViewById(id).setOnLongClickListener(listener);
         }
-        for (int id : favsIds) {
+        for (int id : FAVS_IDS) {
             findViewById(id).setOnLongClickListener(listener);
         }
     }
@@ -457,6 +459,9 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        
+        KissApplication.unsetMainActivity();
+        
         // unregister our receiver
         this.unregisterReceiver(this.mReceiver);
         KissApplication.getCameraHandler().releaseCamera();
@@ -711,7 +716,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
     }
 
     public void displayFavorites() {
-        int[] favoritesIds = favoritesKissBar.getVisibility() == View.VISIBLE ? favsIds : favBarIds;
+        int[] favoritesIds = favoritesKissBar.getVisibility() == View.VISIBLE ? FAVS_IDS : FAV_BAR_IDS;
 
         ArrayList<Result> favoriteResults = KissApplication.getDataHandler(MainActivity.this)
                 .getFavorites(tryToRetrieve);
@@ -786,7 +791,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
             searcher = new QuerySearcher(this, query);
         }
         searcher.execute();
-        displayQuickFavoritesBar(false, false);
+        displayQuickFavoritesBar(true, false);
     }
 
     public void resetTask() {
@@ -832,7 +837,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         return kissBar.getVisibility() != View.VISIBLE;
     }
 
-    public int getFavIconsSize() {
-        return favsIds.length;
+    public static int getFavIconsSize() {
+        return FAVS_IDS.length;
     }
 }

@@ -101,30 +101,4 @@ public class ShortcutsResult extends ResultView {
         }
 
     }
-
-    @Override
-    PopupMenu buildPopupMenu(Context context, RecordAdapter parent, View parentView) {
-        return inflatePopupMenu(R.menu.menu_item_shortcut, context, parentView);
-    }
-
-    @Override
-    Boolean popupMenuClickHandler(Context context, RecordAdapter parent, MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.item_app_uninstall:
-                launchUninstall(context, shortcutPojo);
-                // Also remove item, since it will be uninstalled
-                parent.removeResultView(this);
-                return true;
-
-        }
-        return super.popupMenuClickHandler(context, parent, item);
-    }
-
-    private void launchUninstall(Context context, ShortcutsPojo shortcutPojo) {
-        DataHandler dh = KissApplication.getDataHandler(context);
-        if (dh != null) {
-            dh.removeShortcut(shortcutPojo);
-        }
-    }
-
 }

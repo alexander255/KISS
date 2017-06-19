@@ -15,11 +15,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.dataprovider.search.DataItem;
+import fr.neamar.kiss.dataprovider.search.UIEndpoint;
 import fr.neamar.kiss.loader.LoadSearchPojos;
-import fr.neamar.kiss.pojo.Pojo;
 import fr.neamar.kiss.pojo.SearchPojo;
 
 public class SearchProvider extends Provider<SearchPojo> {
+	private UIEndpoint uiEndpoint;
     private SharedPreferences prefs;
     public static final String URL_REGEX = "^(?:[a-z]+://)?(?:[a-z0-9-]|[^\\x00-\\x7F])+(?:[.](?:[a-z0-9-]|[^\\x00-\\x7F])+)+.*$";
 
@@ -35,6 +37,13 @@ public class SearchProvider extends Provider<SearchPojo> {
         searchProviderUrls.put("Wikipedia", "https://en.wikipedia.org/wiki/");
         searchProviderUrls.put("Yahoo", "https://search.yahoo.com/search?p=");
     }
+    
+	@Override
+	public void onCreate() {
+		this.uiEndpoint = new UIEndpoint(this);
+		
+		super.onCreate();
+	}
 
     @Override
     public void reload() {
@@ -52,7 +61,7 @@ public class SearchProvider extends Provider<SearchPojo> {
             pojo.relevance = 10;
             pojo.url = searchProviderUrls.get(searchProvider);
             pojo.name = searchProvider;
-            pojos.add(new Result(pojo));
+            pojos.add(new DataItem(this.uiEndpoint, pojo));
         }
 
         Matcher m = p.matcher(query);
@@ -65,7 +74,7 @@ public class SearchProvider extends Provider<SearchPojo> {
                 pojo.name = guessedUrl;
                 pojo.url = guessedUrl;
                 pojo.direct = true;
-                pojos.add(new Result(pojo));
+                pojos.add(new DataItem(this.uiEndpoint, pojo));
             }
         }
         return pojos;

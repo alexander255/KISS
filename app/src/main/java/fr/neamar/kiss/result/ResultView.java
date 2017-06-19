@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.MenuRes;
 import android.text.Html;
@@ -20,7 +21,9 @@ import fr.neamar.kiss.MainActivity;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.db.DBHelper;
 import fr.neamar.kiss.pojo.AppPojo;
 import fr.neamar.kiss.pojo.ContactsPojo;
@@ -91,7 +94,27 @@ public abstract class ResultView {
 	 * @return an inflated, listener-free PopupMenu
 	 */
 	PopupMenu buildPopupMenu(Context context, final RecordAdapter parent, View parentView) {
-		return inflatePopupMenu(R.menu.menu_item_default, context, parentView);
+		PopupMenu menu = this.inflatePopupMenu(R.menu.menu_item_default, context, parentView);
+		
+		// Do not display the "Remove"-entry if the item cannot be removed from the provider
+		if((this.result.userInterface.flags & UserInterface.Flags.REMOVABLE) == 0) {
+			menu.getMenu().removeItem(R.id.item_remove);
+		}
+		
+		// Do not display the "Add to Favourites"-entry if the item may not be added to
+		// that list
+		if((this.result.userInterface.flags & UserInterface.Flags.FAVOURABLE) == 0) {
+			menu.getMenu().removeItem(R.id.item_favorites_add);
+		}
+		
+		// Add custom menu actions
+		for(MenuAction item : this.result.userInterface.menuActions) {
+			// Note that we abuse the created menu item's group ID here for storing the action
+			// number of the clicked menu item
+			menu.getMenu().add(item.action, 0, 0, item.title);
+		}
+		
+		return menu;
 	}
 
     protected PopupMenu inflatePopupMenu(@MenuRes int menuId, Context context, View parentView) {
@@ -128,6 +151,15 @@ public abstract class ResultView {
             case R.id.item_favorites_remove:
                 launchRemoveFromFavorites(context, pojo);
                 break;
+			default:
+				try {
+					this.result.callbacks.onMenuAction(item.getGroupId());
+				} catch(RemoteException e) {
+					// Ignore errors if remote provider went away
+					Log.w("ResultView", "Could not dispatch menu action: " + e.toString());
+					e.printStackTrace();
+				}
+				return true;
         }
 
         //Update Search to reflect favorite add, if the "exclude favorites" option is active
@@ -138,14 +170,18 @@ public abstract class ResultView {
 
     private void launchAddToFavorites(Context context, Pojo app) {
         String msg = context.getResources().getString(R.string.toast_favorites_added);
-        KissApplication.getDataHandler(context).addToFavorites((MainActivity) context, app.id);
+        KissApplication.getDataHandler(context).addToFavorites(context, app.id);
         Toast.makeText(context, String.format(msg, app.name), Toast.LENGTH_SHORT).show();
+
+        ((MainActivity) context).displayFavorites();
     }
 
     private void launchRemoveFromFavorites(Context context, Pojo app) {
         String msg = context.getResources().getString(R.string.toast_favorites_removed);
-        KissApplication.getDataHandler(context).removeFromFavorites((MainActivity) context, app.id);
+        KissApplication.getDataHandler(context).removeFromFavorites(context, app.id);
         Toast.makeText(context, String.format(msg, app.name), Toast.LENGTH_SHORT).show();
+
+        ((MainActivity) context).displayFavorites();
     }
 
     /**

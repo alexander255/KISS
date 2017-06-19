@@ -447,7 +447,7 @@ public class DataHandler extends BroadcastReceiver
         return favorites;
     }
 
-    public boolean addToFavorites(MainActivity context, String id) {
+    public boolean addToFavorites(Context context, String id) {
 
         String favApps = PreferenceManager.getDefaultSharedPreferences(context).
                 getString("favorite-apps-list", "");
@@ -459,19 +459,17 @@ public class DataHandler extends BroadcastReceiver
         }
 
         List<String> favAppsList = Arrays.asList(favApps.split(";"));
-        if (favAppsList.size() >= context.getFavIconsSize()) {
+        if (favAppsList.size() >= MainActivity.getFavIconsSize()) {
             favApps = favApps.substring(favApps.indexOf(";") + 1);
         }
 
         PreferenceManager.getDefaultSharedPreferences(context).edit()
                 .putString("favorite-apps-list", favApps + id + ";").apply();
 
-        context.displayFavorites();
-
         return true;
     }
 
-    public boolean removeFromFavorites(MainActivity context, String id) {
+    public boolean removeFromFavorites(Context context, String id) {
 
         String favApps = PreferenceManager.getDefaultSharedPreferences(context).
                 getString("favorite-apps-list", "");
@@ -484,8 +482,6 @@ public class DataHandler extends BroadcastReceiver
 
         PreferenceManager.getDefaultSharedPreferences(context).edit()
                 .putString("favorite-apps-list", favApps.replace(id + ";", "")).apply();
-
-        context.displayFavorites();
 
         return true;
     }

@@ -7,13 +7,15 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.dataprovider.contact.DataItem;
+import fr.neamar.kiss.dataprovider.contact.UIEndpoint;
 import fr.neamar.kiss.loader.LoadContactsPojos;
 import fr.neamar.kiss.normalizer.PhoneNormalizer;
 import fr.neamar.kiss.normalizer.StringNormalizer;
 import fr.neamar.kiss.pojo.ContactsPojo;
-import fr.neamar.kiss.pojo.Pojo;
 
 public class ContactsProvider extends Provider<ContactsPojo> {
+	private UIEndpoint uiEndpoint;
 
     private ContentObserver cObserver = new ContentObserver(null) {
 
@@ -28,14 +30,16 @@ public class ContactsProvider extends Provider<ContactsPojo> {
     public void reload() {
         this.initialize(new LoadContactsPojos(this));
     }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        //register content observer
-        getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, false, cObserver);
-    }
-
+	
+	@Override
+	public void onCreate() {
+		this.uiEndpoint = new UIEndpoint(this);
+		
+		super.onCreate();
+		//register content observer
+		getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, false, cObserver);
+	}
+	
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -102,7 +106,7 @@ public class ContactsProvider extends Provider<ContactsPojo> {
                 if (!alias)
                     contact.setDisplayNameHighlightRegion(matchPositionStart, matchPositionEnd);
                 contact.relevance = relevance;
-                results.add(new Result(contact));
+                results.add(new DataItem(this.uiEndpoint, contact));
 
                 // Circuit-breaker to avoid spending too much time
                 // building results
@@ -120,10 +124,10 @@ public class ContactsProvider extends Provider<ContactsPojo> {
     }
 
     public Result findById(String id) {
-        for (Pojo pojo : pojos) {
+        for (ContactsPojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 pojo.displayName = pojo.name;
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
             }
         }
 
@@ -131,9 +135,9 @@ public class ContactsProvider extends Provider<ContactsPojo> {
     }
 
     public Result findByName(String name) {
-        for (Pojo pojo : pojos) {
+        for (ContactsPojo pojo : pojos) {
             if (pojo.name.equals(name))
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
         }
         return null;
     }
@@ -150,7 +154,7 @@ public class ContactsProvider extends Provider<ContactsPojo> {
 
         for (ContactsPojo pojo : pojos) {
             if (pojo.phoneSimplified.equals(simplifiedPhoneNumber)) {
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
             }
         }
 

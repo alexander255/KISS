@@ -107,32 +107,6 @@ public class ContactsResult extends ResultView {
         return v;
     }
 
-    @Override
-    protected PopupMenu buildPopupMenu(Context context, final RecordAdapter parent, View parentView) {
-        return inflatePopupMenu(R.menu.menu_item_contact, context, parentView);
-    }
-
-    @Override
-    protected Boolean popupMenuClickHandler(Context context, RecordAdapter parent, MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.item_contact_copy_phone:
-                copyPhone(context, contactPojo);
-                return true;
-        }
-
-        return super.popupMenuClickHandler(context, parent, item);
-    }
-
-    @SuppressWarnings("deprecation")
-    private void copyPhone(Context context, ContactsPojo contactPojo) {
-        android.content.ClipboardManager clipboard =
-                (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        android.content.ClipData clip = android.content.ClipData.newPlainText(
-                "Phone number for " + contactPojo.displayName,
-                contactPojo.phone);
-        clipboard.setPrimaryClip(clip);
-    }
-
     @SuppressWarnings("deprecation")
     public Drawable getBasicDrawable(Context context) {
         if (contactPojo.icon != null) {

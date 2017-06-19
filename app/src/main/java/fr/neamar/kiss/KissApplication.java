@@ -1,5 +1,6 @@
 package fr.neamar.kiss;
 
+import android.app.Activity;
 import android.content.Context;
 
 public class KissApplication {
@@ -12,6 +13,7 @@ public class KissApplication {
     private static CameraHandler cameraHandler;
     private static RootHandler rootHandler;
     private static IconsHandler iconsPackHandler;
+    private static Activity activity = null;
 
     private KissApplication() {
     }
@@ -26,6 +28,21 @@ public class KissApplication {
     public static void setDataHandler(DataHandler newDataHandler) {
         dataHandler = newDataHandler;
     }
+
+	public static void setMainActivity(Activity activity) {
+		KissApplication.activity = activity;
+	}
+	
+	public static void unsetMainActivity() {
+		KissApplication.activity = null;
+	}
+	
+	/**
+	 * Get the current forground activity or `null` if no activity is currently running
+	 */
+	public static Activity getMainActivity() {
+		return KissApplication.activity;
+	}
 
     public static CameraHandler getCameraHandler() {
         if (cameraHandler == null) {

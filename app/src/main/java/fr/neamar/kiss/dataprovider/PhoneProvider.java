@@ -6,13 +6,23 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.dataprovider.phone.UIEndpoint;
+import fr.neamar.kiss.dataprovider.phone.DataItem;
 import fr.neamar.kiss.loader.LoadPhonePojos;
 import fr.neamar.kiss.pojo.PhonePojo;
-import fr.neamar.kiss.pojo.Pojo;
 
 public class PhoneProvider extends Provider<PhonePojo> {
     public static final String PHONE_SCHEME = "phone://";
+    
+    private UIEndpoint uiEndpoint;
     private boolean deviceIsPhone = false;
+    
+	@Override
+	public void onCreate() {
+		this.uiEndpoint = new UIEndpoint(this);
+		
+		super.onCreate();
+	}
 
     @Override
     public void reload() {
@@ -38,12 +48,12 @@ public class PhoneProvider extends Provider<PhonePojo> {
         return getResult(id.replaceFirst(Pattern.quote(PHONE_SCHEME), ""));
     }
 
-    private Result getResult(String phoneNumber) {
+    private DataItem getResult(String phoneNumber) {
         PhonePojo pojo = new PhonePojo();
         pojo.id = PHONE_SCHEME + phoneNumber;
         pojo.phone = phoneNumber;
         pojo.relevance = 20;
         pojo.name = phoneNumber;
-        return new Result(pojo);
+        return new DataItem(this.uiEndpoint, pojo);
     }
 }

@@ -5,12 +5,21 @@ import java.util.regex.Pattern;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.dataprovider.toggle.DataItem;
+import fr.neamar.kiss.dataprovider.toggle.UIEndpoint;
 import fr.neamar.kiss.loader.LoadTogglesPojos;
-import fr.neamar.kiss.pojo.Pojo;
 import fr.neamar.kiss.pojo.TogglesPojo;
 
 public class TogglesProvider extends Provider<TogglesPojo> {
+    private UIEndpoint uiEndpoint;
     private String toggleName;
+    
+	@Override
+	public void onCreate() {
+		this.uiEndpoint = new UIEndpoint(this);
+		
+		super.onCreate();
+	}
 
     @Override
     public void reload() {
@@ -42,7 +51,7 @@ public class TogglesProvider extends Provider<TogglesPojo> {
                 toggle.displayName = toggle.name.replaceFirst(
                         "(?i)(" + Pattern.quote(query) + ")", "{$1}");
                 toggle.relevance = relevance;
-                results.add(new Result(toggle));
+                results.add(new DataItem(this.uiEndpoint, toggle));
             }
         }
 
@@ -50,10 +59,10 @@ public class TogglesProvider extends Provider<TogglesPojo> {
     }
 
     public Result findById(String id) {
-        for (Pojo pojo : pojos) {
+        for (TogglesPojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 pojo.displayName = pojo.name;
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
             }
         }
 

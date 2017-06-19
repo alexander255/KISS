@@ -5,12 +5,21 @@ import java.util.regex.Pattern;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.dataprovider.setting.DataItem;
+import fr.neamar.kiss.dataprovider.setting.UIEndpoint;
 import fr.neamar.kiss.loader.LoadSettingsPojos;
-import fr.neamar.kiss.pojo.Pojo;
 import fr.neamar.kiss.pojo.SettingsPojo;
 
 public class SettingsProvider extends Provider<SettingsPojo> {
+    private UIEndpoint uiEndpoint;
     private String settingName;
+    
+	@Override
+	public void onCreate() {
+		this.uiEndpoint = new UIEndpoint(this);
+		
+		super.onCreate();
+	}
 
     @Override
     public void reload() {
@@ -40,7 +49,7 @@ public class SettingsProvider extends Provider<SettingsPojo> {
                 setting.displayName = setting.name.replaceFirst(
                         "(?i)(" + Pattern.quote(query) + ")", "{$1}");
                 setting.relevance = relevance;
-                results.add(new Result(setting));
+                results.add(new DataItem(this.uiEndpoint, setting));
             }
         }
 
@@ -48,10 +57,10 @@ public class SettingsProvider extends Provider<SettingsPojo> {
     }
 
     public Result findById(String id) {
-        for (Pojo pojo : pojos) {
+        for (SettingsPojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 pojo.displayName = pojo.name;
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
             }
         }
 

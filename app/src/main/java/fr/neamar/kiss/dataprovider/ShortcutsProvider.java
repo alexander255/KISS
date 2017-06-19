@@ -3,11 +3,20 @@ package fr.neamar.kiss.dataprovider;
 import java.util.ArrayList;
 
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.dataprovider.shortcut.DataItem;
+import fr.neamar.kiss.dataprovider.shortcut.UIEndpoint;
 import fr.neamar.kiss.loader.LoadShortcutsPojos;
-import fr.neamar.kiss.pojo.Pojo;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
 
 public class ShortcutsProvider extends Provider<ShortcutsPojo> {
+    private UIEndpoint uiEndpoint;
+    
+	@Override
+	public void onCreate() {
+		this.uiEndpoint = new UIEndpoint(this);
+		
+		super.onCreate();
+	}
 
     @Override
     public void reload() {
@@ -46,7 +55,7 @@ public class ShortcutsProvider extends Provider<ShortcutsPojo> {
             if (relevance > 0) {
                 shortcut.setDisplayNameHighlightRegion(matchPositionStart, matchPositionEnd);
                 shortcut.relevance = relevance;
-                results.add(new Result(shortcut));
+                results.add(new DataItem(this.uiEndpoint, shortcut));
             }
         }
 
@@ -54,11 +63,10 @@ public class ShortcutsProvider extends Provider<ShortcutsPojo> {
     }
 
     public Result findById(String id) {
-
-        for (Pojo pojo : pojos) {
+        for (ShortcutsPojo pojo : pojos) {
             if (pojo.id.equals(id)) {
                 pojo.displayName = pojo.name;
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
             }
         }
 
@@ -66,12 +74,10 @@ public class ShortcutsProvider extends Provider<ShortcutsPojo> {
     }
 
     public Result findByName(String name) {
-        for (Pojo pojo : pojos) {
+        for (ShortcutsPojo pojo : pojos) {
             if (pojo.name.equals(name))
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
         }
         return null;
     }
-
-
 }

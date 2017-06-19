@@ -14,16 +14,21 @@ import java.util.ArrayList;
 
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.broadcast.PackageAddedRemovedHandler;
+import fr.neamar.kiss.dataprovider.app.DataItem;
+import fr.neamar.kiss.dataprovider.app.UIEndpoint;
 import fr.neamar.kiss.loader.LoadAppPojos;
 import fr.neamar.kiss.normalizer.StringNormalizer;
 import fr.neamar.kiss.pojo.AppPojo;
-import fr.neamar.kiss.pojo.Pojo;
-import fr.neamar.kiss.broadcast.PackageAddedRemovedHandler;
 import fr.neamar.kiss.utils.UserHandle;
 
 public class AppProvider extends Provider<AppPojo> {
+	private UIEndpoint uiEndpoint;
+
 	@Override
 	public void onCreate() {
+		this.uiEndpoint = new UIEndpoint(this);
+		
 		if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			// Package installation/uninstallation events for the main
 			// profile are still handled using PackageAddedRemovedHandler itself
@@ -215,7 +220,7 @@ public class AppProvider extends Provider<AppPojo> {
                     pojo.setTagHighlight(tagStart, tagEnd);
                 }
                 pojo.relevance = relevance;
-                records.add(new Result(pojo));
+                records.add(new DataItem(this.uiEndpoint, pojo));
             }
         }
 
@@ -237,7 +242,7 @@ public class AppProvider extends Provider<AppPojo> {
                     pojo.displayName = pojo.name;
                     pojo.displayTags = pojo.tags;
                 }
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
             }
 
         }
@@ -252,7 +257,7 @@ public class AppProvider extends Provider<AppPojo> {
     public Result findByName(String name) {
         for (AppPojo pojo : pojos) {
             if (pojo.name.equals(name))
-                return new Result(pojo);
+                return new DataItem(this.uiEndpoint, pojo);
         }
         return null;
     }
@@ -264,7 +269,7 @@ public class AppProvider extends Provider<AppPojo> {
         for (AppPojo pojo : pojos) {
             pojo.displayName = pojo.name;
             pojo.displayTags = pojo.tags;
-            records.add(new Result(pojo));
+            records.add(new DataItem(this.uiEndpoint, pojo));
         }
         return records;
     }
