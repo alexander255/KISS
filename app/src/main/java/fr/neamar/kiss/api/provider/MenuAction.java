@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 
 
 /**
- * Description of the UI elements to render on any result of this type
+ * Description of a single displayable menu entry
  */
 public final class MenuAction implements Parcelable {
 	final static int VERSION = 1;

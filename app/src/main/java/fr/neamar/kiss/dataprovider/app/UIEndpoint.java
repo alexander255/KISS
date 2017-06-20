@@ -10,6 +10,7 @@ import android.content.pm.LauncherApps;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
+import android.os.RemoteException;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -116,7 +117,6 @@ public final class UIEndpoint extends UIEndpointBase {
 					break;
 			}
 		}
-		
 		
 		@Override
 		public void onLaunch(Rect sourceBounds) {

@@ -54,49 +54,11 @@ public class ContactsResult extends ResultView {
             v = inflate(context);
 
         this.displayText(context, v);
+        this.displayButtons(context, v);
 
         // Contact photo
         ImageView contactIcon = (ImageView) v.findViewById(R.id.result_icon);
         contactIcon.setImageDrawable(this.getDrawable(context));
-
-        LinearLayout buttonContainer = (LinearLayout) v.findViewById(R.id.result_extras);
-        buttonContainer.removeAllViews();
-
-        PackageManager pm = context.getPackageManager();
-        if(pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            int primaryColor = Color.parseColor(UiTweaks.getPrimaryColor(context));
-
-            TypedValue typedValue = new TypedValue();
-            context.getTheme().resolveAttribute(R.attr.appSelectableItemBackground, typedValue, true);
-
-            if(!contactPojo.homeNumber) {
-                // Message action
-                ImageButton messageButton = new ImageButton(context);
-                messageButton.setImageResource(R.drawable.ic_message);
-                messageButton.setColorFilter(primaryColor);
-                messageButton.setBackgroundResource(typedValue.resourceId);
-                messageButton.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        launchMessaging(v.getContext());
-                    }
-                });
-                buttonContainer.addView(messageButton);
-            }
-
-            // Phone action
-            ImageButton phoneButton = new ImageButton(context);
-            phoneButton.setImageResource(R.drawable.ic_phone);
-            phoneButton.setColorFilter(primaryColor);
-            phoneButton.setBackgroundResource(typedValue.resourceId);
-            phoneButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    launchCall(v.getContext());
-                }
-            });
-            buttonContainer.addView(phoneButton);
-        }
 
         return v;
     }
@@ -143,39 +105,5 @@ public class ContactsResult extends ResultView {
         canvas = new Canvas(bitmap);
         canvas.drawCircle(width / 2, height / 2, width < height ? width / 2 : height / 2, paint);
         return new BitmapDrawable(context.getResources(), bitmap);
-    }
-
-    private void launchMessaging(final Context context) {
-        String url = "sms:" + Uri.encode(contactPojo.phone);
-        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse(url));
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(i);
-
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                recordLaunch(context);
-                queryInterface.launchOccurred(-1, ContactsResult.this);
-            }
-        }, KissApplication.TOUCH_DELAY);
-
-    }
-
-    private void launchCall(final Context context) {
-        String url = "tel:" + Uri.encode(contactPojo.phone);
-        Intent i = new Intent(Intent.ACTION_CALL, Uri.parse(url));
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(i);
-
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                recordLaunch(context);
-                queryInterface.launchOccurred(-1, ContactsResult.this);
-            }
-        }, KissApplication.TOUCH_DELAY);
-
     }
 }

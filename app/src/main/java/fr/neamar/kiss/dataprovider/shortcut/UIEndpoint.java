@@ -9,6 +9,7 @@ import android.widget.Toast;
 import fr.neamar.kiss.DataHandler;
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.R;
+import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.api.provider.UserInterface;
@@ -33,7 +34,9 @@ public final class UIEndpoint extends UIEndpointBase {
 				"#{name}", "",
 				new MenuAction[] {
 						new MenuAction(ACTION_REMOVE, context.getString(R.string.menu_shortcut_remove))
-				}, UserInterface.Flags.FAVOURABLE
+				},
+				new ButtonAction[0],
+				UserInterface.Flags.FAVOURABLE
 		);
 	}
 	
@@ -51,7 +54,6 @@ public final class UIEndpoint extends UIEndpointBase {
 					break;
 			}
 		}
-		
 		
 		@Override
 		public void onLaunch(Rect sourceBounds) {

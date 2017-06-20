@@ -32,6 +32,7 @@ public class PhoneResult extends ResultView {
             v = inflate(context);
 
         this.displayText(context, v);
+        this.displayButtons(context, v);
 
         ImageView icon = (ImageView) v.findViewById(R.id.result_icon);
         icon.setColorFilter(getThemeFillColor(context), PorterDuff.Mode.SRC_IN);

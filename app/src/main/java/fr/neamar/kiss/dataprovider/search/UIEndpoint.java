@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 
 import fr.neamar.kiss.R;
+import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.api.provider.UserInterface;
@@ -37,11 +38,11 @@ public final class UIEndpoint extends UIEndpointBase {
 		
 		this.userInterface = new UserInterface(
 				String.format(context.getString(R.string.ui_item_search), "#{engine}", "#{query}"), "",
-				menuActions, UserInterface.Flags.NONE
+				menuActions, new ButtonAction[0], UserInterface.Flags.NONE
 		);
 		this.userInterface_direct = new UserInterface(
 				String.format(context.getString(R.string.ui_item_visit), "#{url}"), "",
-				menuActions, UserInterface.Flags.NONE
+				menuActions, new ButtonAction[0], UserInterface.Flags.NONE
 		);
 	}
 	
@@ -60,7 +61,6 @@ public final class UIEndpoint extends UIEndpointBase {
 					break;
 			}
 		}
-		
 		
 		@Override
 		public void onLaunch(Rect sourceBounds) {

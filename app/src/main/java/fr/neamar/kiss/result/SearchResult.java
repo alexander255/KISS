@@ -33,6 +33,7 @@ public class SearchResult extends ResultView {
             v = inflate(context);
 
         this.displayText(context, v);
+        this.displayButtons(context, v);
 
         ImageView image = (ImageView) v.findViewById(R.id.result_icon);
         if (searchPojo.direct) {

@@ -56,6 +56,7 @@ public class AppResult extends ResultView {
         }
 
         this.displayText(context, v);
+        this.displayButtons(context, v);
 
         TextView tagsView = (TextView) v.findViewById(R.id.result_subtext);
         //Hide tags view if tags are empty or if user has selected to hide them and the query doesnt match tags

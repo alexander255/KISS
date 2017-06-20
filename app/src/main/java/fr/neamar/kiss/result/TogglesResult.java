@@ -3,16 +3,10 @@ package fr.neamar.kiss.result;
 import android.content.Context;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
-import android.text.Html;
-import android.text.TextUtils;
 import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import fr.neamar.kiss.R;
@@ -46,62 +40,22 @@ public class TogglesResult extends ResultView {
             v = inflate(context);
 
         this.displayText(context, v);
+        this.displayButtons(context, v);
 
         ImageView toggleIcon = (ImageView) v.findViewById(R.id.result_icon);
         toggleIcon.setImageDrawable(context.getResources().getDrawable(togglePojo.icon));
         toggleIcon.setColorFilter(getThemeFillColor(context), Mode.SRC_IN);
 
         LinearLayout buttonContainer = (LinearLayout) v.findViewById(R.id.result_extras);
-        buttonContainer.removeAllViews();
 
         // Use the handler to check or un-check button
-        this.toggleButton = new Switch(context);
-        buttonContainer.addView(this.toggleButton);
-
-        //set listener to null to avoid calling the listener of the older toggle item
-        //(due to recycling)
-        toggleButton.setOnCheckedChangeListener(null);
+        this.toggleButton = (Switch) buttonContainer.getChildAt(0);
 
         Boolean state = togglesHandler.getState(togglePojo);
-        if (state != null)
+        if (state != null) {
             toggleButton.setChecked(togglesHandler.getState(togglePojo));
-        else
-            toggleButton.setEnabled(false);
-
-        toggleButton.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (!togglesHandler.getState(togglePojo).equals(toggleButton.isChecked())) {
-
-                    // record launch manually
-                    recordLaunch(buttonView.getContext());
-
-                    togglesHandler.setState(togglePojo, toggleButton.isChecked());
-
-                    toggleButton.setEnabled(false);
-                    new AsyncTask<Void, Void, Void>() {
-
-                        @Override
-                        protected Void doInBackground(Void... params) {
-                            try {
-                                Thread.sleep(1500);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            return null;
-                        }
-
-                        @Override
-                        protected void onPostExecute(Void result) {
-                            super.onPostExecute(result);
-                            toggleButton.setEnabled(true);
-                        }
-
-                    }.execute();
-                }
-            }
-        });
+            toggleButton.setEnabled(true);
+        }
         return v;
     }
 

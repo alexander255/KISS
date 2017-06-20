@@ -6,5 +6,6 @@ import fr.neamar.kiss.api.provider.Result;
 
 interface IResultCallbacks {
 	oneway void onMenuAction(int action);
+	oneway void onButtonAction(int action, int newState);
 	oneway void onLaunch(in Rect sourceBounds);
 }

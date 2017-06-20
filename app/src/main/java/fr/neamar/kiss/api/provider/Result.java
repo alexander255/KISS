@@ -3,6 +3,7 @@ package fr.neamar.kiss.api.provider;
 import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import fr.neamar.kiss.pojo.Pojo;
  */
 public class Result implements Parcelable {
 	final static int VERSION = 1;
+	
 	
 	/// Globally unique identifier of this result
 	/// Usually starts with provider scheme (e.g. "app://" or "contact://") to ensure the
@@ -69,11 +71,13 @@ public class Result implements Parcelable {
 		
 		
 		@Override
-		public abstract void onMenuAction(int action);
-		
+		public abstract void onMenuAction(int action) throws RemoteException;
 		
 		@Override
-		public abstract void onLaunch(Rect sourceBounds);
+		public abstract void onButtonAction(int action, int newState) throws RemoteException;
+		
+		@Override
+		public abstract void onLaunch(Rect sourceBounds) throws RemoteException;
 	}
 	
 	
@@ -112,8 +116,8 @@ public class Result implements Parcelable {
 		this.name          = name;
 		this.userInterface = userInterface;
 		this.callbacks     = callbacks;
-		this.relevance     = relevance;
 		this.templateParameters = templateParameters;
+		this.relevance     = relevance;
 		this.pojo          = null;
 	}
 	

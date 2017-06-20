@@ -2,6 +2,7 @@ package fr.neamar.kiss.dataprovider.toggle;
 
 import fr.neamar.kiss.dataprovider.utils.DataItemBase;
 import fr.neamar.kiss.pojo.TogglesPojo;
+import fr.neamar.kiss.toggles.TogglesHandler;
 
 /**
  * Provider-specific data structure that contains all result-specific data that is not directly
@@ -9,6 +10,6 @@ import fr.neamar.kiss.pojo.TogglesPojo;
  */
 public class DataItem extends DataItemBase {
 	public DataItem(UIEndpoint uiEndpoint, TogglesPojo togglePojo) {
-		super(uiEndpoint, togglePojo);
+		super(uiEndpoint, togglePojo, uiEndpoint.new Callbacks());
 	}
 }

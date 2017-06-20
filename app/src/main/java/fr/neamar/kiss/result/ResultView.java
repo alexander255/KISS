@@ -1,26 +1,35 @@
 package fr.neamar.kiss.result;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.support.annotation.ColorInt;
 import android.support.annotation.MenuRes;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import net.andreinc.aleph.AlephFormatter;
 import static net.andreinc.aleph.AlephFormatter.template;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import fr.neamar.kiss.KissApplication;
@@ -28,6 +37,7 @@ import fr.neamar.kiss.MainActivity;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.api.provider.UserInterface;
@@ -93,6 +103,109 @@ public abstract class ResultView {
 		
 		// Hide subtext view if it is empty
 		subtextView.setVisibility(subtextView.getText().length() > 0 ? View.VISIBLE : View.GONE);
+	}
+	
+	
+	protected void displayButtons(Context context, View v) {
+		// Clear previous contents of button container (in case it was recycled)
+		LinearLayout buttonContainer = (LinearLayout) v.findViewById(R.id.result_extras);
+		buttonContainer.removeAllViews();
+		
+		if(this.result.userInterface.buttonActions.length < 1) {
+			return;
+		}
+		
+		// Obtain primary color value
+		@ColorInt
+		int primaryColor = Color.parseColor(UiTweaks.getPrimaryColor(context));
+		
+		// Calculate darker and lighter version of the color value for styling toggle buttons
+		float[] primaryColorHSV = new float[3];
+		Color.colorToHSV(primaryColor, primaryColorHSV);
+		
+		@ColorInt
+		int primaryColorLight = Color.HSVToColor(new float[] {
+				primaryColorHSV[0], primaryColorHSV[1], primaryColorHSV[2] + 0.2f
+		});
+		@ColorInt
+		int primaryColorDark  = Color.HSVToColor(new float[] {
+				primaryColorHSV[0], primaryColorHSV[1], primaryColorHSV[2] - 0.2f
+		});
+		
+		// Create awful thing that tells the system how to render the different states of the
+		// toggle button's thumb
+		ColorStateList thumbColors = new ColorStateList(new int[][]{
+				{ android.R.attr.state_checked, android.R.attr.state_pressed },
+				{ android.R.attr.state_pressed },
+				{ android.R.attr.state_checked },
+				{-android.R.attr.state_enabled },
+				{}
+		}, new int[] {
+				primaryColor,
+				primaryColorLight,
+				primaryColor,
+				primaryColorDark,
+				primaryColorLight
+		});
+		
+		// Get theme background appearance
+		TypedValue background = new TypedValue();
+		context.getTheme().resolveAttribute(R.attr.appSelectableItemBackground, background, true);
+		
+		for(final ButtonAction buttonAction : this.result.userInterface.buttonActions) {
+			switch(buttonAction.type) {
+				case IMAGE_BUTTON:
+					ImageButton imageButton = new ImageButton(context);
+					imageButton.setImageBitmap(buttonAction.icon);
+					imageButton.setColorFilter(primaryColor);
+					imageButton.setBackgroundResource(background.resourceId);
+					buttonContainer.addView(imageButton);
+					
+					imageButton.setOnClickListener(new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							try {
+								ResultView.this.result.callbacks.onButtonAction(buttonAction.action, 0);
+							} catch(RemoteException e) {
+								// Ignore errors if remote provider went away
+								Log.w("ResultView", "Could not dispatch result view button action to provider");
+								e.printStackTrace();
+							}
+						}
+					});
+					break;
+				
+				case TOGGLE_BUTTON:
+					Switch toggleButton = new Switch(context);
+					toggleButton.setEnabled(false);
+					try {
+						Method setThumbTintList = Switch.class.getMethod("setThumbTintList", ColorStateList.class);
+						setThumbTintList.invoke(toggleButton, thumbColors);
+					} catch(Exception e) {
+						// Only available in Android 6+
+						//TODO: Replace this by version check once we finally target Marshmallow
+						e.printStackTrace();
+					}
+					buttonContainer.addView(toggleButton);
+					
+					//TODO: Query button state from provider
+					
+					toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+						@Override
+						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+							try {
+								ResultView.this.result.callbacks.onButtonAction(buttonAction.action, isChecked ? 1 : 0);
+							} catch(RemoteException e) {
+								// Ignore errors if remote provider went away
+								Log.w("ResultView", "Could not dispatch result view button action to provider");
+								e.printStackTrace();
+							}
+						}
+					});
+					
+					break;
+			}
+		}
 	}
 	
 	

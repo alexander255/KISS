@@ -8,6 +8,7 @@ import android.os.Build;
 import android.provider.ContactsContract;
 
 import fr.neamar.kiss.R;
+import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.api.provider.UserInterface;
@@ -56,7 +57,6 @@ public final class UIEndpoint extends UIEndpointBase {
 					break;
 			}
 		}
-		
 		
 		@Override
 		public void onLaunch(Rect sourceBounds) {

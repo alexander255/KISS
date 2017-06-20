@@ -41,6 +41,7 @@ public class ShortcutsResult extends ResultView {
             v = inflate(context);
 
         this.displayText(context, v);
+        this.displayButtons(context, v);
 
         final ImageView shortcutIcon = (ImageView) v.findViewById(R.id.result_icon);
         final ImageView appIcon = (ImageView) v.findViewById(R.id.result_subicon);

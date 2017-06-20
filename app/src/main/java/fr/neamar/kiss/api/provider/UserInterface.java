@@ -35,6 +35,9 @@ public final class UserInterface implements Parcelable {
 	@NonNull
 	public final MenuAction[] menuActions;
 	
+	@NonNull
+	public final ButtonAction[] buttonActions;
+	
 	/// Miscellaneous flags
 	public final int flags;
 	
@@ -49,6 +52,7 @@ public final class UserInterface implements Parcelable {
 							in.readString(),
 							in.readString(),
 							in.createTypedArray(MenuAction.CREATOR),
+							in.createTypedArray(ButtonAction.CREATOR),
 							in.readInt()
 					);
 				
@@ -70,13 +74,18 @@ public final class UserInterface implements Parcelable {
 	}
 	
 	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions) {
-		this(textTemplate, subtextTemplate, menuActions, Flags.FAVOURABLE | Flags.REMOVABLE);
+		this(textTemplate, subtextTemplate, menuActions, new ButtonAction[] {});
 	}
 	
-	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, int flags) {
+	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions) {
+		this(textTemplate, subtextTemplate, menuActions, buttonActions, Flags.FAVOURABLE | Flags.REMOVABLE);
+	}
+	
+	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions, int flags) {
 		this.textTemplate    = textTemplate;
 		this.subtextTemplate = subtextTemplate;
 		this.menuActions     = menuActions;
+		this.buttonActions   = buttonActions;
 		this.flags           = flags & Flags.ALL;
 	}
 	
@@ -86,7 +95,8 @@ public final class UserInterface implements Parcelable {
 		
 		out.writeString(this.textTemplate);
 		out.writeString(this.subtextTemplate);
-		out.writeTypedArray(this.menuActions, 0);
+		out.writeTypedArray(this.menuActions, flags);
+		out.writeTypedArray(this.buttonActions, flags);
 		out.writeInt(this.flags);
 	}
 	
