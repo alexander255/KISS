@@ -40,8 +40,7 @@ public class ShortcutsResult extends ResultView {
         if (v == null)
             v = inflate(context);
 
-        TextView appName = (TextView) v.findViewById(R.id.result_text);
-        appName.setText(enrichText(shortcutPojo.displayName, context));
+        this.displayText(context, v);
 
         final ImageView shortcutIcon = (ImageView) v.findViewById(R.id.result_icon);
         final ImageView appIcon = (ImageView) v.findViewById(R.id.result_subicon);

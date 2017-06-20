@@ -25,9 +25,12 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	@Override
 	protected void onBuildUserInterface() {
-		this.userInterface = new UserInterface(new MenuAction[]{
-				new MenuAction(ACTION_REMOVE, context.getString(R.string.menu_shortcut_remove))
-		}, UserInterface.Flags.FAVOURABLE);
+		this.userInterface = new UserInterface(
+				"#{name}", "",
+				new MenuAction[] {
+						new MenuAction(ACTION_REMOVE, context.getString(R.string.menu_shortcut_remove))
+				}, UserInterface.Flags.FAVOURABLE
+		);
 	}
 	
 	

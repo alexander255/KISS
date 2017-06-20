@@ -45,10 +45,7 @@ public class TogglesResult extends ResultView {
         if (v == null)
             v = inflate(context);
 
-        String togglePrefix = "<small><small>" + context.getString(R.string.toggles_prefix) + "</small></small>";
-
-        TextView toggleName = (TextView) v.findViewById(R.id.result_text);
-        toggleName.setText(TextUtils.concat(Html.fromHtml(togglePrefix), enrichText(togglePojo.displayName, context)));
+        this.displayText(context, v);
 
         ImageView toggleIcon = (ImageView) v.findViewById(R.id.result_icon);
         toggleIcon.setImageDrawable(context.getResources().getDrawable(togglePojo.icon));

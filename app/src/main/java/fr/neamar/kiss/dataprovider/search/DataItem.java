@@ -9,6 +9,13 @@ import fr.neamar.kiss.pojo.SearchPojo;
  */
 public class DataItem extends Result {
 	public DataItem(UIEndpoint uiEndpoint, SearchPojo searchPojo) {
-		super(searchPojo, uiEndpoint.userInterface, uiEndpoint.new Callbacks());
+		super(searchPojo,
+		      searchPojo.direct ? uiEndpoint.userInterface_direct : uiEndpoint.userInterface,
+		      uiEndpoint.new Callbacks()
+		);
+		
+		this.templateParameters.put("engine", searchPojo.name);
+		this.templateParameters.put("query",  "{" + searchPojo.query + "}");
+		this.templateParameters.put("url",    "{" + searchPojo.url + "}");
 	}
 }

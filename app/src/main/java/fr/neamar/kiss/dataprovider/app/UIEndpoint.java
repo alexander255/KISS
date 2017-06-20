@@ -49,24 +49,24 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	@Override
 	protected void onBuildUserInterface() {
-		final MenuAction[] ACTIONS_BASE = new MenuAction[]{
+		final MenuAction[] ACTIONS_BASE = new MenuAction[] {
 				new MenuAction(ACTION_EXCLUDE, context.getString(R.string.menu_exclude)),
 				new MenuAction(ACTION_TAGS_EDIT, context.getString(R.string.menu_tags_edit)),
 				new MenuAction(ACTION_DETAILS, context.getString(R.string.menu_app_details))
 		};
 		
-		final MenuAction[] ACTIONS_UNINSTALL = new MenuAction[]{
+		final MenuAction[] ACTIONS_UNINSTALL = new MenuAction[] {
 				new MenuAction(ACTION_UNINSTALL, context.getString(R.string.menu_app_uninstall))
 		};
 		
-		final MenuAction[] ACTIONS_ROOT = new MenuAction[]{
+		final MenuAction[] ACTIONS_ROOT = new MenuAction[] {
 				new MenuAction(ACTION_HIBERNATE, context.getString(R.string.menu_app_hibernate))
 		};
 		
-		this.userInterface = new UserInterface(ACTIONS_BASE);
-		this.userInterface_withUninstall = new UserInterface(concat(ACTIONS_BASE, ACTIONS_UNINSTALL));
-		this.userInterface_withRoot = new UserInterface(concat(ACTIONS_BASE, ACTIONS_ROOT));
-		this.userInterface_withBoth = new UserInterface(concat(ACTIONS_BASE, ACTIONS_UNINSTALL, ACTIONS_ROOT));
+		this.userInterface = new UserInterface("#{name}", "#{tags}", ACTIONS_BASE);
+		this.userInterface_withUninstall = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_UNINSTALL));
+		this.userInterface_withRoot      = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_ROOT));
+		this.userInterface_withBoth      = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_UNINSTALL, ACTIONS_ROOT));
 	}
 	
 	

@@ -27,10 +27,13 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	@Override
 	protected void onBuildUserInterface() {
-		this.userInterface = new UserInterface(new MenuAction[]{
-				new MenuAction(ACTION_CREATE_CONTACT, context.getString(R.string.menu_phone_create)),
-				new MenuAction(ACTION_SEND_MESSAGE, context.getString(R.string.ui_item_contact_hint_message))
-		});
+		this.userInterface = new UserInterface(
+				String.format(context.getString(R.string.ui_item_phone), "#{phone}"), "",
+				new MenuAction[] {
+						new MenuAction(ACTION_CREATE_CONTACT, context.getString(R.string.menu_phone_create)),
+						new MenuAction(ACTION_SEND_MESSAGE, context.getString(R.string.ui_item_contact_hint_message))
+				}
+		);
 	}
 	
 	

@@ -22,11 +22,22 @@ public final class UIEndpoint extends UIEndpointBase {
 		super(context);
 	}
 	
+	public UserInterface userInterface_direct;
+	
 	@Override
 	protected void onBuildUserInterface() {
-		this.userInterface = new UserInterface(new MenuAction[]{
+		final MenuAction[] menuActions = new MenuAction[] {
 				new MenuAction(ACTION_SHARE, context.getString(R.string.share))
-		});
+		};
+		
+		this.userInterface = new UserInterface(
+				String.format(context.getString(R.string.ui_item_search), "#{engine}", "#{query}"), "",
+				menuActions, UserInterface.Flags.NONE
+		);
+		this.userInterface_direct = new UserInterface(
+				String.format(context.getString(R.string.ui_item_visit), "#{url}"), "",
+				menuActions, UserInterface.Flags.NONE
+		);
 	}
 	
 	

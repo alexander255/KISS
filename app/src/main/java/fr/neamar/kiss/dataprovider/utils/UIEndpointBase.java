@@ -39,7 +39,7 @@ public abstract class UIEndpointBase {
 	 * it in the property `userInterface`.
 	 */
 	protected void onBuildUserInterface() {
-		this.userInterface = new UserInterface(new MenuAction[]{});
+		this.userInterface = new UserInterface("#{name}");
 	}
 	
 	

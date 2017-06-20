@@ -14,7 +14,13 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import net.andreinc.aleph.AlephFormatter;
+import static net.andreinc.aleph.AlephFormatter.template;
+
+import java.util.Map;
 
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.MainActivity;
@@ -61,7 +67,84 @@ public abstract class ResultView {
 
         throw new RuntimeException("Unable to create a result from POJO");
     }
-
+	
+	
+	/**
+	 * Render the text of this result based on its UI description
+	 */
+	protected void displayText(Context context, View v) {
+		// Put text rendering templates into templating engine
+		AlephFormatter text    = template(this.result.userInterface.textTemplate);
+		AlephFormatter subtext = template(this.result.userInterface.subtextTemplate);
+		
+		// Apply template substitutions
+		for(Map.Entry<String, String> entry : this.result.templateParameters.entrySet()) {
+			text    = text.arg(entry.getKey(), escapeHtml(entry.getValue()));
+			subtext = subtext.arg(entry.getKey(), escapeHtml(entry.getValue()));
+		}
+		
+		// *Enrich* the final text and display it
+		TextView textView = (TextView) v.findViewById(R.id.result_text);
+		textView.setText(enrichText(text.fmt(), context));
+		
+		TextView subtextView = (TextView) v.findViewById(R.id.result_subtext);
+		subtextView.setText(enrichText(subtext.fmt(), context));
+		
+		// Hide subtext view if it is empty
+		subtextView.setVisibility(subtextView.getText().length() > 0 ? View.VISIBLE : View.GONE);
+	}
+	
+	
+	/**
+	 * `android.text.Html.escapeHtml` polyfill for Ice Cream Sandwich (4.0.3 / 15)
+	 *
+	 * Source code copied from the Android Nougat AOSP source code (Apache License 2.0).
+	 */
+	private static String escapeHtml(CharSequence text) {
+		if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+			return Html.escapeHtml(text);
+		}
+		
+		StringBuilder out = new StringBuilder();
+		
+		int start = 0;
+		int end   = text.length();
+		
+		for (int i = start; i < end; i++) {
+			char c = text.charAt(i);
+			
+			if (c == '<') {
+				out.append("&lt;");
+			} else if (c == '>') {
+				out.append("&gt;");
+			} else if (c == '&') {
+				out.append("&amp;");
+			} else if (c >= 0xD800 && c <= 0xDFFF) {
+				if (c < 0xDC00 && i + 1 < end) {
+					char d = text.charAt(i + 1);
+					if (d >= 0xDC00 && d <= 0xDFFF) {
+						i++;
+						int codepoint = 0x010000 | (int) c - 0xD800 << 10 | (int) d - 0xDC00;
+						out.append("&#").append(codepoint).append(";");
+					}
+				}
+			} else if (c > 0x7E || c < ' ') {
+				out.append("&#").append((int) c).append(";");
+			} else if (c == ' ') {
+				while (i + 1 < end && text.charAt(i + 1) == ' ') {
+					out.append("&nbsp;");
+					i++;
+				}
+				
+				out.append(' ');
+			} else {
+				out.append(c);
+			}
+		}
+		
+		return out.toString();
+	}
+    
     /**
      * How to display this record ?
      *

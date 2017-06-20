@@ -53,13 +53,7 @@ public class ContactsResult extends ResultView {
         if (v == null)
             v = inflate(context);
 
-        // Contact name
-        TextView contactName = (TextView) v.findViewById(R.id.result_text);
-        contactName.setText(enrichText(contactPojo.displayName, context));
-
-        // Contact phone
-        TextView contactPhone = (TextView) v.findViewById(R.id.result_subtext);
-        contactPhone.setText(contactPojo.phone);
+        this.displayText(context, v);
 
         // Contact photo
         ImageView contactIcon = (ImageView) v.findViewById(R.id.result_icon);

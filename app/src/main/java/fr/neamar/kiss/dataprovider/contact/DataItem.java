@@ -8,7 +8,12 @@ import fr.neamar.kiss.pojo.ContactsPojo;
  * relevant to the launcher
  */
 public class DataItem extends Result {
+	public static final int ACTION_COPY_NUMBER = 1;
+	
+	
 	public DataItem(UIEndpoint uiEndpoint, ContactsPojo contactPojo) {
 		super(contactPojo, uiEndpoint.userInterface, uiEndpoint.new Callbacks());
+		
+		this.templateParameters.put("phone", contactPojo.phone);
 	}
 }

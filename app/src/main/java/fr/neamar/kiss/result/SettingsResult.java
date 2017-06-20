@@ -29,9 +29,7 @@ public class SettingsResult extends ResultView {
         if (v == null)
             v = inflate(context);
 
-        String settingPrefix = "<small><small>" + context.getString(R.string.settings_prefix) + "</small></small>";
-        TextView settingName = (TextView) v.findViewById(R.id.result_text);
-        settingName.setText(TextUtils.concat(Html.fromHtml(settingPrefix), enrichText(settingPojo.displayName, context)));
+        this.displayText(context, v);
 
         ImageView settingIcon = (ImageView) v.findViewById(R.id.result_icon);
         Drawable drawable = getDrawable(context);

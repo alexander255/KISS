@@ -25,7 +25,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	@Override
 	protected void onBuildUserInterface() {
-		this.userInterface = new UserInterface(new MenuAction[] {
+		this.userInterface = new UserInterface("#{name}", "#{phone}", new MenuAction[] {
 				new MenuAction(ACTION_COPY_NUMBER, context.getString(R.string.menu_contact_copy_phone))
 		}, UserInterface.Flags.FAVOURABLE);
 	}

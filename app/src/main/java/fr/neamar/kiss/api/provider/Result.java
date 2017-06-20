@@ -4,6 +4,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import fr.neamar.kiss.pojo.Pojo;
 
 
@@ -19,9 +22,15 @@ public class Result implements Parcelable {
 	@NonNull
 	public String id;
 	
-	// Name for this pojo, e.g. app name
+	/// Name for this pojo (e.g. app name); no substitution or formatting will take place on
+	/// this value
 	@NonNull
 	public String name;
+	
+	/// Mapping of all template parameters that should be substituted for their value in the
+	/// user-interfaces text and subtext lines
+	@NonNull
+	public Map<String, String> templateParameters;
 	
 	/// Description of the user-interface used to display this result item
 	@NonNull
@@ -74,6 +83,7 @@ public class Result implements Parcelable {
 							in.readString(),
 							UserInterface.CREATOR.createFromParcel(in),
 							IResultCallbacks.Stub.asInterface(in.readStrongBinder()),
+							in.readHashMap(null),
 							in.readInt()
 					);
 				
@@ -92,17 +102,18 @@ public class Result implements Parcelable {
 	
 	
 	
-	public Result(String id, String name, UserInterface userInterface, IResultCallbacks callbacks, int relevance) {
+	public Result(String id, String name, UserInterface userInterface, IResultCallbacks callbacks, Map<String, String> templateParameters, int relevance) {
 		this.id            = id;
 		this.name          = name;
 		this.userInterface = userInterface;
 		this.callbacks     = callbacks;
 		this.relevance     = relevance;
+		this.templateParameters = templateParameters;
 		this.pojo          = null;
 	}
 	
-	protected Result(String id, String name, UserInterface userInterface, Callbacks callbacks, int relevance) {
-		this(id, name, userInterface, (IResultCallbacks) callbacks, relevance);
+	protected Result(String id, String name, UserInterface userInterface, Callbacks callbacks, Map<String, String> templateParameters, int relevance) {
+		this(id, name, userInterface, (IResultCallbacks) callbacks, templateParameters, relevance);
 		
 		callbacks.result = this;
 	}
@@ -117,6 +128,10 @@ public class Result implements Parcelable {
 		this.name      = pojo.name;
 		this.relevance = pojo.relevance;
 		this.pojo      = pojo;
+		
+		this.templateParameters = new HashMap<>(2);
+		this.templateParameters.put("name", pojo.displayName);
+		this.templateParameters.put("tags", pojo.displayTags);
 	}
 	
 	public Result(Pojo pojo, UserInterface userInterface, IResultCallbacks callbacks) {
@@ -142,6 +157,7 @@ public class Result implements Parcelable {
 		out.writeString(this.name);
 		this.userInterface.writeToParcel(out, flags);
 		out.writeStrongBinder(this.callbacks.asBinder());
+		out.writeMap(this.templateParameters);
 		out.writeInt(this.relevance);
 	}
 	

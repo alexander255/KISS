@@ -55,8 +55,7 @@ public class AppResult extends ResultView {
             v = inflate(context);
         }
 
-        TextView appName = (TextView) v.findViewById(R.id.result_text);
-        appName.setText(enrichText(appPojo.displayName, context));
+        this.displayText(context, v);
 
         TextView tagsView = (TextView) v.findViewById(R.id.result_subtext);
         //Hide tags view if tags are empty or if user has selected to hide them and the query doesnt match tags
@@ -66,7 +65,6 @@ public class AppResult extends ResultView {
         }
         else {
             tagsView.setVisibility(View.VISIBLE);
-            tagsView.setText(enrichText(appPojo.displayTags, context));
         }
 
         final ImageView appIcon = (ImageView) v.findViewById(R.id.result_icon);

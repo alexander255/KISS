@@ -10,5 +10,7 @@ import fr.neamar.kiss.pojo.PhonePojo;
 public class DataItem extends Result {
 	public DataItem(UIEndpoint uiEndpoint, PhonePojo phonePojo) {
 		super(phonePojo, uiEndpoint.userInterface, uiEndpoint.new Callbacks());
+		
+		this.templateParameters.put("phone", "{" + phonePojo.phone + "}");
 	}
 }
