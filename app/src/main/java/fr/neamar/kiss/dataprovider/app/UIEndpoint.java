@@ -2,10 +2,12 @@ package fr.neamar.kiss.dataprovider.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -112,6 +114,34 @@ public final class UIEndpoint extends UIEndpointBase {
 				case ACTION_HIBERNATE:
 					this.hibernate();
 					break;
+			}
+		}
+		
+		
+		@Override
+		public void onLaunch(Rect sourceBounds) {
+			final DataItem dataItem = (DataItem) result;
+			final AppPojo  appPojo  = (AppPojo)  result.pojo;
+			
+			try {
+				if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+					LauncherApps launcher = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
+					launcher.startMainActivity(dataItem.className, appPojo.userHandle.getRealHandle(), sourceBounds, null);
+				} else {
+					Intent intent = new Intent(Intent.ACTION_MAIN);
+					intent.addCategory(Intent.CATEGORY_LAUNCHER);
+					intent.setComponent(dataItem.className);
+					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+					
+					if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+						intent.setSourceBounds(sourceBounds);
+					}
+					
+					context.startActivity(intent);
+				}
+			} catch(ActivityNotFoundException e) {
+				// Application was just removed?
+				Toast.makeText(context, R.string.application_not_found, Toast.LENGTH_LONG).show();
 			}
 		}
 		

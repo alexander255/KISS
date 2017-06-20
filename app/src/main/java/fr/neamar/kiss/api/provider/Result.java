@@ -1,5 +1,6 @@
 package fr.neamar.kiss.api.provider;
 
+import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -69,6 +70,10 @@ public class Result implements Parcelable {
 		
 		@Override
 		public abstract void onMenuAction(int action);
+		
+		
+		@Override
+		public abstract void onLaunch(Rect sourceBounds);
 	}
 	
 	

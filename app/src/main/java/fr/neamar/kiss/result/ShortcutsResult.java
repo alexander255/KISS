@@ -82,22 +82,4 @@ public class ShortcutsResult extends ResultView {
     public Drawable getDrawable(Context context) {
         return new BitmapDrawable(context.getResources(), shortcutPojo.icon);
     }
-
-
-    @Override
-    protected void doLaunch(Context context, View v) {
-
-        try {
-            Intent intent = Intent.parseUri(shortcutPojo.intentUri, 0);
-            if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                intent.setSourceBounds(v.getClipBounds());
-            }
-
-            context.startActivity(intent);
-        } catch (Exception e) {
-            // Application was just removed?
-            Toast.makeText(context, R.string.application_not_found, Toast.LENGTH_LONG).show();
-        }
-
-    }
 }

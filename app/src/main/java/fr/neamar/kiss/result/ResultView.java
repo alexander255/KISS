@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.MenuRes;
@@ -239,7 +240,7 @@ public abstract class ResultView {
 					this.result.callbacks.onMenuAction(item.getGroupId());
 				} catch(RemoteException e) {
 					// Ignore errors if remote provider went away
-					Log.w("ResultView", "Could not dispatch menu action: " + e.toString());
+					Log.w("ResultView", "Could not dispatch result view menu action to provider");
 					e.printStackTrace();
 				}
 				return true;
@@ -287,13 +288,25 @@ public abstract class ResultView {
         doLaunch(context, v);
     }
 
-    /**
-     * How to launch this record ? Most probably, will fire an intent. This
-     * function must call recordLaunch()
-     *
-     * @param context android context
-     */
-    protected abstract void doLaunch(Context context, View v);
+	/**
+	 * How to launch this record ? Most probably, will fire an intent.
+	 *
+	 * @param context android context
+	 * @param v The Android view that has caused this action
+	 */
+	protected void doLaunch(Context context, View v) {
+		try {
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+				this.result.callbacks.onLaunch(v.getClipBounds());
+			} else {
+				this.result.callbacks.onLaunch(null);
+			}
+		} catch(RemoteException e) {
+			// Ignore errors if remote provider went away
+			Log.w("ResultView", "Could not dispatch result view launch command to provider");
+			e.printStackTrace();
+		}
+	}
 
     /**
      * How to launch this record "quickly" ? Most probably, same as doLaunch().

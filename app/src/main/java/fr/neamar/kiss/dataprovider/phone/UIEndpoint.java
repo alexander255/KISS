@@ -2,7 +2,9 @@ package fr.neamar.kiss.dataprovider.phone;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.ContactsContract;
 
 import fr.neamar.kiss.R;
@@ -53,6 +55,23 @@ public final class UIEndpoint extends UIEndpointBase {
 					this.launchSendMessage();
 					break;
 			}
+		}
+		
+		
+		@Override
+		public void onLaunch(Rect sourceBounds) {
+			final DataItem  dataItem  = (DataItem)  this.result;
+			final PhonePojo phonePojo = (PhonePojo) dataItem.pojo;
+			
+			Intent phone = new Intent(Intent.ACTION_CALL);
+			phone.setData(Uri.parse("tel:" + Uri.encode(phonePojo.phone)));
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+				phone.setSourceBounds(sourceBounds);
+			}
+			
+			phone.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			
+			context.startActivity(phone);
 		}
 		
 		

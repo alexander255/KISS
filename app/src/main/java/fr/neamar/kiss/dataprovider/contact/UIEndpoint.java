@@ -3,6 +3,11 @@ package fr.neamar.kiss.dataprovider.contact;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Rect;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.ContactsContract;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.MenuAction;
@@ -43,6 +48,26 @@ public final class UIEndpoint extends UIEndpointBase {
 					this.copyPhone();
 					break;
 			}
+		}
+		
+		
+		@Override
+		public void onLaunch(Rect sourceBounds) {
+			final DataItem     dataItem    = (DataItem)     this.result;
+			final ContactsPojo contactPojo = (ContactsPojo) dataItem.pojo;
+			
+			Intent viewContact = new Intent(Intent.ACTION_VIEW);
+			
+			viewContact.setData(Uri.withAppendedPath(
+					ContactsContract.Contacts.CONTENT_LOOKUP_URI,
+					String.valueOf(contactPojo.lookupKey)));
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+				viewContact.setSourceBounds(sourceBounds);
+			}
+			
+			viewContact.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			viewContact.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+			context.startActivity(viewContact);
 		}
 		
 		

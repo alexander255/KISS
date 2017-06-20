@@ -145,21 +145,6 @@ public class ContactsResult extends ResultView {
         return new BitmapDrawable(context.getResources(), bitmap);
     }
 
-    @Override
-    public void doLaunch(Context context, View v) {
-        Intent viewContact = new Intent(Intent.ACTION_VIEW);
-
-        viewContact.setData(Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI,
-                String.valueOf(contactPojo.lookupKey)));
-        if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            viewContact.setSourceBounds(v.getClipBounds());
-        }
-
-        viewContact.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        viewContact.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        context.startActivity(viewContact);
-    }
-
     private void launchMessaging(final Context context) {
         String url = "sms:" + Uri.encode(contactPojo.phone);
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse(url));

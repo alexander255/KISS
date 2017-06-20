@@ -1,6 +1,10 @@
 package fr.neamar.kiss.dataprovider.shortcut;
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Rect;
+import android.os.Build;
+import android.widget.Toast;
 
 import fr.neamar.kiss.DataHandler;
 import fr.neamar.kiss.KissApplication;
@@ -45,6 +49,25 @@ public final class UIEndpoint extends UIEndpointBase {
 				case ACTION_REMOVE:
 					doRemove();
 					break;
+			}
+		}
+		
+		
+		@Override
+		public void onLaunch(Rect sourceBounds) {
+			final DataItem      dataItem     = (DataItem)      this.result;
+			final ShortcutsPojo shortcutPojo = (ShortcutsPojo) dataItem.pojo;
+			
+			try {
+				Intent intent = Intent.parseUri(shortcutPojo.intentUri, 0);
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+					intent.setSourceBounds(sourceBounds);
+				}
+				
+				context.startActivity(intent);
+			} catch(Exception e) {
+				// Application was just removed?
+				Toast.makeText(context, R.string.application_not_found, Toast.LENGTH_LONG).show();
 			}
 		}
 		

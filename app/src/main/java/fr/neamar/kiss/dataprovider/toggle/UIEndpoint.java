@@ -1,11 +1,13 @@
 package fr.neamar.kiss.dataprovider.toggle;
 
 import android.content.Context;
+import android.graphics.Rect;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
+import fr.neamar.kiss.pojo.TogglesPojo;
 
 
 /**
@@ -24,5 +26,16 @@ public final class UIEndpoint extends UIEndpointBase {
 				String.format("<small><small>%s</small></small> #{name}", context.getString(R.string.toggles_prefix)), "",
 				new MenuAction[] {}
 		);
+	}
+	
+	
+	public final class Callbacks extends UIEndpointBase.Callbacks {
+		@Override
+		public void onLaunch(Rect sourceBounds) {
+			final DataItem    dataItem   = (DataItem)    this.result;
+			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
+			
+			//FIXME: Needs remote button UI implementation first
+		}
 	}
 }

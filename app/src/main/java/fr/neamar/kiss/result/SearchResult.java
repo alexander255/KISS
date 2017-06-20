@@ -43,33 +43,4 @@ public class SearchResult extends ResultView {
         image.setColorFilter(getThemeFillColor(context), PorterDuff.Mode.SRC_IN);
         return v;
     }
-
-    @Override
-    public void doLaunch(Context context, View v) {
-        boolean exceptionThrown = false;
-        Intent search = new Intent(Intent.ACTION_WEB_SEARCH);
-        if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            search.setSourceBounds(v.getClipBounds());
-        }
-        search.putExtra(SearchManager.QUERY, searchPojo.query);
-        if (pojo.name.equals("Google")) {
-            // In the latest Google Now version, ACTION_WEB_SEARCH is broken when used with FLAG_ACTIVITY_NEW_TASK.
-            // Adding FLAG_ACTIVITY_CLEAR_TASK seems to fix the problem.
-            search.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            search.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-            try {
-                context.startActivity(search);
-            } catch (ActivityNotFoundException e) {
-                // This exception gets thrown if Google Search has been deactivated:
-                exceptionThrown = true;
-            }
-        }
-        if (exceptionThrown || !pojo.name.equals("Google")) {
-            Uri uri = Uri.parse(searchPojo.url + searchPojo.query);
-            search = new Intent(Intent.ACTION_VIEW, uri);
-            search.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(search);
-        }
-    }
 }

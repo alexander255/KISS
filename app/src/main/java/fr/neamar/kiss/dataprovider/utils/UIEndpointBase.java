@@ -2,9 +2,9 @@ package fr.neamar.kiss.dataprovider.utils;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 
 import fr.neamar.kiss.MainActivity;
-import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.api.provider.UserInterface;
 
@@ -74,7 +74,10 @@ public abstract class UIEndpointBase {
 				// Match pressed result menu items here
 			}
 		}
+		
+		@Override
+		public void onLaunch(Rect sourceBounds) {
+			// Do something when app entry is pressed
+		}
 	}
-	
-	
 }

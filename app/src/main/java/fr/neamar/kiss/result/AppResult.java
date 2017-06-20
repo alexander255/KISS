@@ -102,28 +102,4 @@ public class AppResult extends ResultView {
         return icon;
         
     }
-
-	@Override
-	public void doLaunch(Context context, View v) {
-		try {
-			if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-				LauncherApps launcher = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
-				launcher.startMainActivity(className, appPojo.userHandle.getRealHandle(), v.getClipBounds(), null);
-			} else {
-				Intent intent = new Intent(Intent.ACTION_MAIN);
-				intent.addCategory(Intent.CATEGORY_LAUNCHER);
-				intent.setComponent(className);
-				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-				
-				if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-					intent.setSourceBounds(v.getClipBounds());
-				}
-				
-				context.startActivity(intent);
-			}
-		 } catch (ActivityNotFoundException e) {
-			// Application was just removed?
-			Toast.makeText(context, R.string.application_not_found, Toast.LENGTH_LONG).show();
-		}
-	}
 }

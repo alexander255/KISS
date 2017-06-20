@@ -41,19 +41,6 @@ public class PhoneResult extends ResultView {
     }
 
     @Override
-    public void doLaunch(Context context, View v) {
-        Intent phone = new Intent(Intent.ACTION_CALL);
-        phone.setData(Uri.parse("tel:" + Uri.encode(phonePojo.phone)));
-        if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            phone.setSourceBounds(v.getClipBounds());
-        }
-
-        phone.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-        context.startActivity(phone);
-    }
-
-    @Override
     public Drawable getDrawable(Context context) {
         //noinspection deprecation: getDrawable(int, Theme) requires SDK 21+
         return context.getResources().getDrawable(android.R.drawable.ic_menu_call);

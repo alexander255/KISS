@@ -11,4 +11,8 @@ public class DataItemBase extends Result {
 	public DataItemBase(UIEndpointBase uiEndpoint, Pojo pojo) {
 		super(pojo, uiEndpoint.userInterface, uiEndpoint.new Callbacks());
 	}
+	
+	public DataItemBase(UIEndpointBase uiEndpoint, Pojo pojo, UIEndpointBase.Callbacks callbacks) {
+		super(pojo, uiEndpoint.userInterface, callbacks);
+	}
 }

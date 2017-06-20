@@ -52,18 +52,4 @@ public class SettingsResult extends ResultView {
 
         return null;
     }
-
-    @Override
-    public void doLaunch(Context context, View v) {
-        Intent intent = new Intent(settingPojo.settingName);
-        if (!settingPojo.packageName.isEmpty()) {
-            intent.setClassName(settingPojo.packageName, settingPojo.settingName);
-        }
-        if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            intent.setSourceBounds(v.getClipBounds());
-        }
-
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
-    }
 }
