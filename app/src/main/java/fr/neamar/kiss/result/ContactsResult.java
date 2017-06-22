@@ -49,18 +49,19 @@ public class ContactsResult extends ResultView {
     }
 
     @Override
-    public View display(Context context, int position, View v) {
-        if (v == null)
-            v = inflate(context);
+    public View display(Context context, int position, View view) {
+        if (view == null)
+	        view = inflate(context);
 
-        this.displayText(context, v);
-        this.displayButtons(context, v);
+        this.displayText(context, view);
+        this.displayButtons(context, view);
+        this.displayStaticIcon(context, view);
 
         // Contact photo
-        ImageView contactIcon = (ImageView) v.findViewById(R.id.result_icon);
+        ImageView contactIcon = (ImageView) view.findViewById(R.id.result_icon);
         contactIcon.setImageDrawable(this.getDrawable(context));
 
-        return v;
+        return view;
     }
 
     @SuppressWarnings("deprecation")

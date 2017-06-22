@@ -25,22 +25,22 @@ public class SettingsResult extends ResultView {
     }
 
     @Override
-    public View display(Context context, int position, View v) {
-        if (v == null)
-            v = inflate(context);
+    public View display(Context context, int position, View view) {
+        if (view == null)
+	        view = inflate(context);
 
-        this.displayText(context, v);
+        this.displayText(context, view);
+        this.displayButtons(context, view);
+        this.displayStaticIcon(context, view);
 
-        ImageView settingIcon = (ImageView) v.findViewById(R.id.result_icon);
+        ImageView settingIcon = (ImageView) view.findViewById(R.id.result_icon);
         Drawable drawable = getDrawable(context);
         if(drawable != null) {
             settingIcon.setImageDrawable(drawable);
-        } else {
-            settingIcon.setImageResource(android.R.drawable.ic_menu_manage);
         }
         settingIcon.setColorFilter(getThemeFillColor(context), Mode.SRC_IN);
 
-        return v;
+        return view;
     }
 
     @SuppressWarnings("deprecation")

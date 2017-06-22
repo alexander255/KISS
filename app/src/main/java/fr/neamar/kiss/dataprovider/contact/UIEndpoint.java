@@ -50,7 +50,7 @@ public final class UIEndpoint extends UIEndpointBase {
 			this.userInterface = this.userInterface_noMessage = new UserInterface(
 					"#{name}", "#{phone}",
 					menuActions, new ButtonAction[0],
-					UserInterface.Flags.FAVOURABLE
+					null, UserInterface.Flags.FAVOURABLE
 			);
 		} else {
 			final Bitmap iconPhone   = this.drawableToBitmap(R.drawable.ic_phone);
@@ -65,13 +65,13 @@ public final class UIEndpoint extends UIEndpointBase {
 			this.userInterface_noMessage = new UserInterface(
 					"#{name}", "#{phone}",
 					menuActions, buttons1,
-					UserInterface.Flags.FAVOURABLE
+					null, UserInterface.Flags.FAVOURABLE
 			);
 			
 			this.userInterface = new UserInterface(
 					"#{name}", "#{phone}",
 					menuActions, buttons2,
-					UserInterface.Flags.FAVOURABLE
+					null, UserInterface.Flags.FAVOURABLE
 			);
 		}
 	}

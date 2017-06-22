@@ -36,6 +36,7 @@ public final class UIEndpoint extends UIEndpointBase {
 						new MenuAction(ACTION_REMOVE, context.getString(R.string.menu_shortcut_remove))
 				},
 				new ButtonAction[0],
+				this.drawableToBitmap(android.R.drawable.ic_menu_send),
 				UserInterface.Flags.FAVOURABLE
 		);
 	}

@@ -31,22 +31,23 @@ public class TogglesResult extends ResultView {
 
     @SuppressWarnings({"ResourceType", "deprecation"})
     @Override
-    public View display(Context context, int position, View v) {
+    public View display(Context context, int position, View view) {
         // On first run, initialize handler
         if (togglesHandler == null)
             togglesHandler = new TogglesHandler(context);
 
-        if (v == null)
-            v = inflate(context);
+        if (view == null)
+	        view = inflate(context);
 
-        this.displayText(context, v);
-        this.displayButtons(context, v);
+        this.displayText(context, view);
+        this.displayButtons(context, view);
+        this.displayStaticIcon(context, view);
 
-        ImageView toggleIcon = (ImageView) v.findViewById(R.id.result_icon);
+        ImageView toggleIcon = (ImageView) view.findViewById(R.id.result_icon);
         toggleIcon.setImageDrawable(context.getResources().getDrawable(togglePojo.icon));
         toggleIcon.setColorFilter(getThemeFillColor(context), Mode.SRC_IN);
 
-        LinearLayout buttonContainer = (LinearLayout) v.findViewById(R.id.result_extras);
+        LinearLayout buttonContainer = (LinearLayout) view.findViewById(R.id.result_extras);
 
         // Use the handler to check or un-check button
         this.toggleButton = (Switch) buttonContainer.getChildAt(0);
@@ -56,7 +57,7 @@ public class TogglesResult extends ResultView {
             toggleButton.setChecked(togglesHandler.getState(togglePojo));
             toggleButton.setEnabled(true);
         }
-        return v;
+        return view;
     }
 
     @SuppressWarnings("deprecation")

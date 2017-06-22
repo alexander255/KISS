@@ -36,15 +36,16 @@ public class ShortcutsResult extends ResultView {
     }
 
     @Override
-    public View display(final Context context, int position, View v) {
-        if (v == null)
-            v = inflate(context);
+    public View display(final Context context, int position, View view) {
+        if (view == null)
+	        view = inflate(context);
 
-        this.displayText(context, v);
-        this.displayButtons(context, v);
+        this.displayText(context, view);
+        this.displayButtons(context, view);
+        this.displayStaticIcon(context, view);
 
-        final ImageView shortcutIcon = (ImageView) v.findViewById(R.id.result_icon);
-        final ImageView appIcon = (ImageView) v.findViewById(R.id.result_subicon);
+        final ImageView shortcutIcon = (ImageView) view.findViewById(R.id.result_icon);
+        final ImageView appIcon = (ImageView) view.findViewById(R.id.result_subicon);
 
         // Retrieve package icon for this shortcut
         final PackageManager packageManager = context.getPackageManager();
@@ -61,23 +62,19 @@ public class ShortcutsResult extends ResultView {
             }
         } catch (NameNotFoundException e) {
             e.printStackTrace();
-            return v;
+            return view;
         } catch (URISyntaxException e) {
             e.printStackTrace();
-            return v;
+            return view;
         }
 
         if (shortcutPojo.icon != null) {
             BitmapDrawable drawable = new BitmapDrawable(context.getResources(), shortcutPojo.icon);
             shortcutIcon.setImageDrawable(drawable);
             appIcon.setImageDrawable(appDrawable);
-        } else {
-            // No icon for this shortcut, use app icon
-            shortcutIcon.setImageDrawable(appDrawable);
-            appIcon.setImageResource(android.R.drawable.ic_menu_send);
         }
 
-        return v;
+        return view;
     }
 
     public Drawable getDrawable(Context context) {

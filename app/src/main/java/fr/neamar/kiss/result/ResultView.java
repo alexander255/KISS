@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.RemoteException;
@@ -19,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Switch;
@@ -210,6 +212,26 @@ public abstract class ResultView {
 	
 	
 	/**
+	 * Display the icon statically associated with the user-interface of this result (if any)
+	 */
+	protected void displayStaticIcon(Context context, View v) {
+		ImageView icon = (ImageView) v.findViewById(R.id.result_icon);
+		
+		if(this.result.userInterface.staticIcon != null) {
+			icon.setImageBitmap(this.result.userInterface.staticIcon);
+		} else {
+			icon.setImageBitmap(null);
+		}
+		
+		if((this.result.userInterface.flags & UserInterface.Flags.TINT_ICON) != 0) {
+			icon.setColorFilter(getThemeFillColor(context), PorterDuff.Mode.SRC_IN);
+		} else {
+			icon.clearColorFilter();
+		}
+	}
+	
+	
+	/**
 	 * `android.text.Html.escapeHtml` polyfill for Ice Cream Sandwich (4.0.3 / 15)
 	 *
 	 * Source code copied from the Android Nougat AOSP source code (Apache License 2.0).
@@ -258,15 +280,25 @@ public abstract class ResultView {
 		
 		return out.toString();
 	}
-    
-    /**
-     * How to display this record ?
-     *
-     * @param context     android context
-     * @param convertView a view to be recycled
-     * @return a view to display as item
-     */
-    public abstract View display(Context context, int position, View convertView);
+	
+	/**
+	 * How to display this record ?
+	 *
+	 * @param context android context
+	 * @param view    a view to be recycled
+	 * @return a view to display as item
+	 */
+	public View display(Context context, int position, View view) {
+		if(view == null) {
+			view = inflate(context);
+		}
+		
+		this.displayText(context, view);
+		this.displayButtons(context, view);
+		this.displayStaticIcon(context, view);
+		
+		return view;
+	}
 
     /**
      * How to display the popup menu

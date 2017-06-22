@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.os.Build;
 
 import fr.neamar.kiss.R;
+import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
@@ -26,7 +27,9 @@ public final class UIEndpoint extends UIEndpointBase {
 	protected void onBuildUserInterface() {
 		this.userInterface = new UserInterface(
 				String.format("<small><small>%s</small></small> #{name}", context.getString(R.string.settings_prefix)), "",
-				new MenuAction[] {}
+				new MenuAction[0], new ButtonAction[0],
+				this.drawableToBitmap(android.R.drawable.ic_menu_manage),
+				UserInterface.Flags.DEFAULT | UserInterface.Flags.TINT_ICON
 		);
 	}
 	

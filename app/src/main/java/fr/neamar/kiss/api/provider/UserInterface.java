@@ -1,8 +1,10 @@
 package fr.neamar.kiss.api.provider;
 
+import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * Declarative description of the UI elements used to render the referencing `Result` object
@@ -16,8 +18,11 @@ public final class UserInterface implements Parcelable {
 		public final static int REMOVABLE  = 0x00000001;
 		/// Can the given result type be added to favourites by the user?
 		public final static int FAVOURABLE = 0x00000002;
+		/// Should the static icon be tinted based on the currently selected launcher base color?
+		public final static int TINT_ICON  = 0x00000004;
 		
-		public final static int ALL = REMOVABLE | FAVOURABLE;
+		public final static int DEFAULT = REMOVABLE | FAVOURABLE;
+		public final static int ALL     = REMOVABLE | FAVOURABLE | TINT_ICON;
 	}
 	
 	/// Pre-formatted result text template
@@ -38,6 +43,10 @@ public final class UserInterface implements Parcelable {
 	@NonNull
 	public final ButtonAction[] buttonActions;
 	
+	/// Optional static result placeholder icon
+	@Nullable
+	public final Bitmap staticIcon;
+	
 	/// Miscellaneous flags
 	public final int flags;
 	
@@ -53,6 +62,7 @@ public final class UserInterface implements Parcelable {
 							in.readString(),
 							in.createTypedArray(MenuAction.CREATOR),
 							in.createTypedArray(ButtonAction.CREATOR),
+							in.readByte() > 0 ? Bitmap.CREATOR.createFromParcel(in) : null,
 							in.readInt()
 					);
 				
@@ -78,14 +88,19 @@ public final class UserInterface implements Parcelable {
 	}
 	
 	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions) {
-		this(textTemplate, subtextTemplate, menuActions, buttonActions, Flags.FAVOURABLE | Flags.REMOVABLE);
+		this(textTemplate, subtextTemplate, menuActions, buttonActions, null);
 	}
 	
-	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions, int flags) {
+	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions, Bitmap staticIcon) {
+		this(textTemplate, subtextTemplate, menuActions, buttonActions, staticIcon, Flags.DEFAULT);
+	}
+	
+	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions, Bitmap staticIcon, int flags) {
 		this.textTemplate    = textTemplate;
 		this.subtextTemplate = subtextTemplate;
 		this.menuActions     = menuActions;
 		this.buttonActions   = buttonActions;
+		this.staticIcon      = staticIcon;
 		this.flags           = flags & Flags.ALL;
 	}
 	
@@ -97,6 +112,10 @@ public final class UserInterface implements Parcelable {
 		out.writeString(this.subtextTemplate);
 		out.writeTypedArray(this.menuActions, flags);
 		out.writeTypedArray(this.buttonActions, flags);
+		out.writeByte((byte) (this.staticIcon != null ? 1 : 0));
+		if(this.staticIcon != null) {
+			this.staticIcon.writeToParcel(out, flags);
+		}
 		out.writeInt(this.flags);
 	}
 	

@@ -35,7 +35,10 @@ public final class UIEndpoint extends UIEndpointBase {
 				new MenuAction[] {
 						new MenuAction(ACTION_CREATE_CONTACT, context.getString(R.string.menu_phone_create)),
 						new MenuAction(ACTION_SEND_MESSAGE, context.getString(R.string.ui_item_contact_hint_message))
-				}
+				},
+				new ButtonAction[0],
+				this.drawableToBitmap(R.drawable.call),
+				UserInterface.Flags.DEFAULT | UserInterface.Flags.TINT_ICON
 		);
 	}
 	

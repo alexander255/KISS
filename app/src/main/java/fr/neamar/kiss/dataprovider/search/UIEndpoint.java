@@ -38,11 +38,13 @@ public final class UIEndpoint extends UIEndpointBase {
 		
 		this.userInterface = new UserInterface(
 				String.format(context.getString(R.string.ui_item_search), "#{engine}", "#{query}"), "",
-				menuActions, new ButtonAction[0], UserInterface.Flags.NONE
+				menuActions, new ButtonAction[0], this.drawableToBitmap(R.drawable.search),
+				UserInterface.Flags.TINT_ICON
 		);
 		this.userInterface_direct = new UserInterface(
 				String.format(context.getString(R.string.ui_item_visit), "#{url}"), "",
-				menuActions, new ButtonAction[0], UserInterface.Flags.NONE
+				menuActions, new ButtonAction[0], this.drawableToBitmap(R.drawable.ic_public),
+				UserInterface.Flags.TINT_ICON
 		);
 	}
 	

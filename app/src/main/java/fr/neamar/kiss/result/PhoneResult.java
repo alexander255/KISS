@@ -27,18 +27,15 @@ public class PhoneResult extends ResultView {
     }
 
     @Override
-    public View display(Context context, int position, View v) {
-        if (v == null)
-            v = inflate(context);
+    public View display(Context context, int position, View view) {
+        if (view == null)
+	        view = inflate(context);
 
-        this.displayText(context, v);
-        this.displayButtons(context, v);
+        this.displayText(context, view);
+        this.displayButtons(context, view);
+        this.displayStaticIcon(context, view);
 
-        ImageView icon = (ImageView) v.findViewById(R.id.result_icon);
-        icon.setColorFilter(getThemeFillColor(context), PorterDuff.Mode.SRC_IN);
-        icon.setImageResource(R.drawable.call);
-
-        return v;
+        return view;
     }
 
     @Override

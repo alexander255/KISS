@@ -50,15 +50,16 @@ public class AppResult extends ResultView {
     }
 
     @Override
-    public View display(final Context context, int position, View v) {
-        if (v == null) {
-            v = inflate(context);
+    public View display(final Context context, int position, View view) {
+        if (view == null) {
+	        view = inflate(context);
         }
 
-        this.displayText(context, v);
-        this.displayButtons(context, v);
+        this.displayText(context, view);
+        this.displayButtons(context, view);
+	    this.displayStaticIcon(context, view);
 
-        TextView tagsView = (TextView) v.findViewById(R.id.result_subtext);
+        TextView tagsView = (TextView) view.findViewById(R.id.result_subtext);
         //Hide tags view if tags are empty or if user has selected to hide them and the query doesnt match tags
         if (appPojo.displayTags.isEmpty() ||
                 ((!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("tags-visible", true)) && (appPojo.displayTags.equals(appPojo.tags)))) {
@@ -68,7 +69,7 @@ public class AppResult extends ResultView {
             tagsView.setVisibility(View.VISIBLE);
         }
 
-        final ImageView appIcon = (ImageView) v.findViewById(R.id.result_icon);
+        final ImageView appIcon = (ImageView) view.findViewById(R.id.result_icon);
 
         if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("icons-hide", false)) {
             // Display icon directy for first icons, and also for phones above lollipop
@@ -90,7 +91,7 @@ public class AppResult extends ResultView {
         else {
             appIcon.setVisibility(View.INVISIBLE);
         }
-        return v;
+        return view;
     }
 
     @Override
