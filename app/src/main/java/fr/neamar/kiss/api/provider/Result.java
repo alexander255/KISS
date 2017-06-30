@@ -71,13 +71,19 @@ public class Result implements Parcelable {
 		
 		
 		@Override
-		public abstract void onMenuAction(int action) throws RemoteException;
+		public abstract void onMenuAction(ResultControllerConnection controller, int action) throws RemoteException;
 		
 		@Override
-		public abstract void onButtonAction(int action, int newState) throws RemoteException;
+		public abstract void onButtonAction(ResultControllerConnection controller, int action, int newState) throws RemoteException;
 		
 		@Override
-		public abstract void onLaunch(Rect sourceBounds) throws RemoteException;
+		public abstract void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException;
+		
+		@Override
+		public abstract void onCreate(ResultControllerConnection controller) throws RemoteException;
+		
+		@Override
+		public abstract void onDestroy(ResultControllerConnection controller) throws RemoteException;
 	}
 	
 	

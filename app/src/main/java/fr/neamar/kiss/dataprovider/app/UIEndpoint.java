@@ -7,10 +7,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,7 +26,7 @@ import java.util.Arrays;
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.MenuAction;
-import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.AppPojo;
@@ -94,7 +96,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(int action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) {
 			switch (action) {
 				case ACTION_EXCLUDE:
 					this.excludeFromAppList();
@@ -119,7 +121,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onLaunch(Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
 			final DataItem dataItem = (DataItem) result;
 			final AppPojo  appPojo  = (AppPojo)  result.pojo;
 			
@@ -142,6 +144,17 @@ public final class UIEndpoint extends UIEndpointBase {
 			} catch(ActivityNotFoundException e) {
 				// Application was just removed?
 				Toast.makeText(context, R.string.application_not_found, Toast.LENGTH_LONG).show();
+			}
+		}
+		
+		@Override
+		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
+			final DataItem dataItem = (DataItem) this.result;
+			final AppPojo  appPojo  = (AppPojo)  dataItem.pojo;
+			
+			if(!PreferenceManager.getDefaultSharedPreferences(context).getBoolean("icons-hide", false)) {
+				Bitmap icon = drawableToBitmap(KissApplication.getIconsHandler(context).getDrawableIconForPackage(dataItem.className, appPojo.userHandle));
+				controller.setIcon(icon, false);
 			}
 		}
 		

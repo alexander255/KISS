@@ -3,6 +3,9 @@ package fr.neamar.kiss;
 import android.app.Activity;
 import android.content.Context;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class KissApplication {
     /**
      * Number of ms to wait, after a click occurred, to record a launch
@@ -14,6 +17,7 @@ public class KissApplication {
     private static RootHandler rootHandler;
     private static IconsHandler iconsPackHandler;
     private static Activity activity = null;
+    private static ExecutorService executor = Executors.newCachedThreadPool();
 
     private KissApplication() {
     }
@@ -78,6 +82,10 @@ public class KissApplication {
 
     public static void resetIconsHandler(Context ctx) {
         iconsPackHandler = new IconsHandler(ctx);
+    }
+
+    public static ExecutorService getThreadPoolExecutor() {
+        return executor;
     }
 
 }

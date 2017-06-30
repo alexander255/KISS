@@ -8,9 +8,12 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.RemoteException;
+import android.util.Log;
 
+import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.MainActivity;
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 
 /**
@@ -106,7 +109,7 @@ public abstract class UIEndpointBase {
 	 */
 	public class Callbacks extends Result.Callbacks {
 		@Override
-		public void onMenuAction(int action) throws RemoteException {
+		public void onMenuAction(ResultControllerConnection controller, int action) throws RemoteException {
 			//noinspection StatementWithEmptyBody
 			switch(action) {
 				// Match pressed result menu items here
@@ -114,7 +117,7 @@ public abstract class UIEndpointBase {
 		}
 		
 		@Override
-		public void onButtonAction(int action, int newState) throws RemoteException {
+		public void onButtonAction(ResultControllerConnection controller, int action, int newState) throws RemoteException {
 			//noinspection StatementWithEmptyBody
 			switch(action) {
 				// Match pressed buttons here
@@ -122,8 +125,38 @@ public abstract class UIEndpointBase {
 		}
 		
 		@Override
-		public void onLaunch(Rect sourceBounds) throws RemoteException {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			// Do something when app entry is pressed
+		}
+		
+		@Override
+		public void onCreate(final ResultControllerConnection controller) throws RemoteException {
+			// Called when result is being displayed – the controller can be used to influence
+			// certain parameters of the displayed item (such as it's icon)
+			// Several overlapping show/hide cycles may occur, but their serial numbers will differ.
+			
+			// Since local provider methods are actually just invoked synchronously on the same
+			// thread, switch between threads here
+			KissApplication.getThreadPoolExecutor().submit(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						onCreateAsync(controller);
+					} catch(RemoteException e) {
+						Log.w("UIEndpointBase", "Could not respond to launcher `onShow` request");
+						e.printStackTrace();
+					}
+				}
+			});
+		}
+		
+		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
+			// Asynchronous version of `onShow`
+		}
+		
+		@Override
+		public void onDestroy(ResultControllerConnection controller) throws RemoteException {
+			// Called when result is not shown anymore
 		}
 	}
 }

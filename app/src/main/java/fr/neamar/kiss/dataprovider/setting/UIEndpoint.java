@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.RemoteException;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.SettingsPojo;
@@ -36,7 +38,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onLaunch(Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
 			final DataItem     dataItem    = (DataItem)     this.result;
 			final SettingsPojo settingPojo = (SettingsPojo) dataItem.pojo;
 			
@@ -50,6 +52,16 @@ public final class UIEndpoint extends UIEndpointBase {
 			
 			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			context.startActivity(intent);
+		}
+		
+		@Override
+		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
+			final DataItem     dataItem    = (DataItem)     this.result;
+			final SettingsPojo settingPojo = (SettingsPojo) dataItem.pojo;
+			
+			if(settingPojo.icon != -1) {
+				controller.setIcon(drawableToBitmap(settingPojo.icon), true);
+			}
 		}
 	}
 }

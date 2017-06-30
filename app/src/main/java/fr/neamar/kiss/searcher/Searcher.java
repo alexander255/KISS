@@ -5,11 +5,12 @@ import android.os.AsyncTask;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import fr.neamar.kiss.MainActivity;
 import fr.neamar.kiss.api.provider.Result;
-import fr.neamar.kiss.result.ResultView;
+import fr.neamar.kiss.ui.ResultView;
 
 public abstract class Searcher extends AsyncTask<Void, Void, List<Result>> {
     protected static final int DEFAULT_MAX_RESULTS = 25;
@@ -24,17 +25,10 @@ public abstract class Searcher extends AsyncTask<Void, Void, List<Result>> {
     @Override
     protected void onPostExecute(List<Result> results) {
         super.onPostExecute(results);
+        Collections.reverse(results);
+        
         activity.adapter.clear();
-
-        Collection<ResultView> resultViews = new ArrayList<>();
-
-        if (resultViews != null) {
-            for (int i = results.size() - 1; i >= 0; i--) {
-                resultViews.add(ResultView.fromResult(activity, results.get(i)));
-            }
-
-            activity.adapter.addAll(resultViews);
-        }
+        activity.adapter.addAll(results);
         activity.resetTask();
     }
 }

@@ -10,7 +10,7 @@ import android.provider.ContactsContract;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
-import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.PhonePojo;
@@ -49,7 +49,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(int action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) {
 			switch (action) {
 				case ACTION_CREATE_CONTACT:
 					// Create a new contact with this phone number
@@ -62,7 +62,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onLaunch(Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
 			final DataItem  dataItem  = (DataItem)  this.result;
 			final PhonePojo phonePojo = (PhonePojo) dataItem.pojo;
 			

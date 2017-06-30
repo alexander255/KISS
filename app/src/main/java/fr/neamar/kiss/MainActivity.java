@@ -11,10 +11,13 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.DataSetObserver;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.text.Editable;
@@ -30,11 +33,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
@@ -43,11 +46,13 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import fr.neamar.kiss.adapter.RecordAdapter;
+import fr.neamar.kiss.api.provider.IResultController;
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.broadcast.IncomingCallHandler;
 import fr.neamar.kiss.broadcast.IncomingSmsHandler;
 import fr.neamar.kiss.dataprovider.AppProvider;
-import fr.neamar.kiss.result.ResultView;
+import fr.neamar.kiss.ui.ResultView;
 import fr.neamar.kiss.searcher.ApplicationsSearcher;
 import fr.neamar.kiss.searcher.HistorySearcher;
 import fr.neamar.kiss.searcher.NullSearcher;
@@ -233,12 +238,12 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         this.listEmpty = this.findViewById(android.R.id.empty);
 
         // Create adapter for records
-        this.adapter = new RecordAdapter(this, this, R.layout.result, new ArrayList<ResultView>());
+        this.adapter = new RecordAdapter(this, this, R.layout.result, new ArrayList<Result>());
         this.list.setAdapter(this.adapter);
 
         this.list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                adapter.onClick(position, v);
+                adapter.onClick((ResultView) v, v);
             }
         });
         this.adapter.registerDataSetObserver(new DataSetObserver() {
@@ -285,7 +290,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 RecordAdapter adapter = ((RecordAdapter) list.getAdapter());
 
-                adapter.onClick(adapter.getCount() - 1, v);
+                adapter.onClick((ResultView) list.getChildAt(list.getChildCount() - 1), v);
 
                 return true;
             }
@@ -301,7 +306,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         this.list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View v, int pos, long id) {
-                ((RecordAdapter) parent.getAdapter()).onLongClick(pos, v);
+                ((RecordAdapter) parent.getAdapter()).onLongClick((ResultView) v, v);
                 return true;
             }
         });
@@ -341,8 +346,8 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
                 }
                 // Favorites handling
                 Result result = favorites.get(favNumber);
-                final ResultView resultView = ResultView.fromResult(MainActivity.this, result);
-                resultView.getPopupMenu(MainActivity.this, adapter, view).show();
+                final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, result);
+                resultView.getPopupMenu(adapter, view).show();
                 return true;
             }
         };
@@ -602,9 +607,9 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         }
         // Favorites handling
         Result result = favorites.get(favNumber);
-        final ResultView resultView = ResultView.fromResult(MainActivity.this, result);
+        final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, result);
 
-        resultView.fastLaunch(MainActivity.this, favorite);
+        resultView.fastLaunch(favorite);
     }
 
     private void displayClearOnInput() {
@@ -735,16 +740,28 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         for (int i = 0; i < Math.min(favoritesIds.length, favoriteResults.size()); i++) {
             Result result = favoriteResults.get(i);
 
-            ImageView image = (ImageView) findViewById(favoritesIds[i]);
-
-            ResultView resultView = ResultView.fromResult(MainActivity.this, result);
-            Drawable drawable = resultView.getDrawable(MainActivity.this);
-            if (drawable != null) {
-                image.setImageDrawable(drawable);
+            final ImageView image = (ImageView) findViewById(favoritesIds[i]);
+            
+            if(result.userInterface.staticIcon != null) {
+                image.setImageBitmap(result.userInterface.staticIcon);
             } else {
-                Log.e(TAG, "Falling back to default image for favorite.");
-                // Use the default contact image otherwise
                 image.setImageResource(R.drawable.ic_contact);
+            }
+    
+            try {
+                result.callbacks.onCreate(new ResultControllerConnection(new IResultController.Stub() {
+                    @Override
+                    public void setIcon(Bitmap icon, boolean tintIcon) throws RemoteException {
+                        image.setImageBitmap(icon);
+                    }
+                    
+                    @Override
+                    public void setSubicon(Bitmap icon, boolean tintIcon) throws RemoteException {
+                        // Not supported when displaying favourites
+                    }
+                }));
+            } catch(RemoteException e) {
+                e.printStackTrace();
             }
 
             image.setVisibility(View.VISIBLE);
@@ -802,7 +819,8 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
      * Call this function when we're leaving the activity We can't use
      * onPause(), since it may be called for a configuration change
      */
-    public void launchOccurred(int index, ResultView resultView) {
+    @Override
+    public void launchOccurred(ResultView resultView, View reason) {
         // We selected an item on the list,
         // now we can cleanup the filter:
         if (!searchEditText.getText().toString().equals("")) {

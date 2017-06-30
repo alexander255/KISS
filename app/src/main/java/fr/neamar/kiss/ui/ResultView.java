@@ -1,18 +1,22 @@
-package fr.neamar.kiss.result;
+package fr.neamar.kiss.ui;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.os.Handler;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.ColorInt;
+import android.support.annotation.IdRes;
 import android.support.annotation.MenuRes;
+import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.Spanned;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -23,6 +27,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,7 +35,6 @@ import android.widget.Toast;
 import net.andreinc.aleph.AlephFormatter;
 import static net.andreinc.aleph.AlephFormatter.template;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -40,52 +44,178 @@ import fr.neamar.kiss.R;
 import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
 import fr.neamar.kiss.api.provider.ButtonAction;
+import fr.neamar.kiss.api.provider.IResultController;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.db.DBHelper;
-import fr.neamar.kiss.pojo.AppPojo;
-import fr.neamar.kiss.pojo.ContactsPojo;
-import fr.neamar.kiss.pojo.PhonePojo;
-import fr.neamar.kiss.pojo.Pojo;
-import fr.neamar.kiss.pojo.SearchPojo;
-import fr.neamar.kiss.pojo.SettingsPojo;
-import fr.neamar.kiss.pojo.ShortcutsPojo;
-import fr.neamar.kiss.pojo.TogglesPojo;
 import fr.neamar.kiss.searcher.QueryInterface;
 
-public abstract class ResultView {
-    /**
-     * Current information pojo
-     */
-    Result result = null;
-    Pojo pojo = null;
 
-    public static ResultView fromResult(QueryInterface parent, Result result) {
-        if (result.pojo instanceof AppPojo)
-            return new AppResult((AppPojo) result.pojo, result);
-        else if (result.pojo instanceof ContactsPojo)
-            return new ContactsResult(parent, (ContactsPojo) result.pojo, result);
-        else if (result.pojo instanceof SearchPojo)
-            return new SearchResult((SearchPojo) result.pojo, result);
-        else if (result.pojo instanceof SettingsPojo)
-            return new SettingsResult((SettingsPojo) result.pojo, result);
-        else if (result.pojo instanceof TogglesPojo)
-            return new TogglesResult((TogglesPojo) result.pojo, result);
-        else if (result.pojo instanceof PhonePojo)
-            return new PhoneResult((PhonePojo) result.pojo, result);
-        else if (result.pojo instanceof ShortcutsPojo)
-            return new ShortcutsResult((ShortcutsPojo) result.pojo, result);
-
-
-        throw new RuntimeException("Unable to create a result from POJO");
-    }
+public class ResultView extends RelativeLayout {
+	/**
+	 * Result item that is currently being rendered
+	 */
+	private Result result = null;
 	
+	/**
+	 * Callback interface for the remote provider to influence rendering of the current result item
+	 */
+	private ResultControllerConnection controller = null;
+	
+	private final static class ResultController extends IResultController.Stub {
+		/// Result view that may be controlled by this result controller
+		/// (if `null` the controller will do nothing)
+		private ResultView resultView;
+		
+		/// Handler used for processing requests on the main thread
+		/// (they may be dispatched from any thread)
+		private final Handler handler;
+		
+		ResultController(ResultView resultView) {
+			this.resultView = resultView;
+			this.handler    = new Handler(resultView.getContext().getMainLooper());
+		}
+		
+		void detachFromResultView() {
+			this.resultView = null;
+		}
+		
+		@Override
+		public void setIcon(final Bitmap icon, final boolean tintIcon) {
+			this.handler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(resultView != null) {
+						resultView.setImageContents(R.id.result_icon, icon, tintIcon);
+					}
+				}
+			});
+		}
+		
+		@Override
+		public void setSubicon(final Bitmap icon, final boolean tintIcon) {
+			this.handler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(resultView != null) {
+						resultView.setImageContents(R.id.result_subicon, icon, tintIcon);
+					}
+				}
+			});
+		}
+	}
+	
+	
+	
+	/**
+	 * Standard Android View constructor – use `create` instead
+	 * @internal
+	 */
+	public ResultView(Context context) {
+		super(context);
+	}
+	
+	/**
+	 * Standard Android View constructor – use `create` instead
+	 * @internal
+	 */
+	public ResultView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+	}
+	
+	/**
+	 * Standard Android View constructor – use `create` instead
+	 * @internal
+	 */
+	public ResultView(Context context, AttributeSet attrs, int defStyleAttr) {
+		super(context, attrs, defStyleAttr);
+	}
+	
+	
+	/**
+	 * Create new `ResultView` using its XML layout
+	 *
+	 * @param context UI Context that will host this View
+	 * @param parent
+	 * @param result Result instance to initially render on this View
+	 */
+	public static ResultView create(Context context, QueryInterface parent, @Nullable Result result) {
+		LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		ResultView resultView = (ResultView) inflater.inflate(R.layout.result, null);
+		resultView.setResult(result);
+		return resultView;
+	}
+	
+	
+	@Override
+	protected void onDetachedFromWindow() {
+		this.setResult(null);
+		
+		super.onDetachedFromWindow();
+	}
+	
+	
+	/**
+	 * @return The result object that this view will attempt to render
+	 */
+	public Result getResult() {
+		return this.result;
+	}
+	
+	/**
+	 * Change the result object wrapped by this view
+	 *
+	 * This will also terminate any `IResultController` connections that may be currently active
+	 * on this view.
+	 *
+	 * @param result The new result that should be rendered by this view
+	 */
+	public void setResult(@Nullable Result result) {
+		// Do nothing if the result actually stays the same
+		if(result == this.result) {
+			return;
+		}
+		
+		
+		// Disarm controller instance and notify the connected provider that their result is
+		// disappearing
+		if(this.controller != null) {
+			((ResultController) this.controller.controller).detachFromResultView();
+			try {
+				this.result.callbacks.onDestroy(this.controller);
+			} catch(RemoteException e) {
+				Log.w("ResultView", "Could not dispatch result view hide event to provider");
+				e.printStackTrace();
+			}
+		}
+		
+		// Set new state
+		this.controller = null;
+		this.result     = result;
+		
+		if(this.result != null) {
+			// Build view tree for new result
+			this.displayText();
+			this.displayButtons();
+			this.displayStaticIcon();
+			
+			// Notify the provider of the new result that it is now going to be shown
+			this.controller = new ResultControllerConnection(new ResultController(this));
+			try {
+				this.result.callbacks.onCreate(this.controller);
+			} catch(RemoteException e) {
+				Log.w("ResultView", "Could not dispatch result view show event to provider");
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	/**
 	 * Render the text of this result based on its UI description
 	 */
-	protected void displayText(Context context, View v) {
+	protected void displayText() {
 		// Put text rendering templates into templating engine
 		AlephFormatter text    = template(this.result.userInterface.textTemplate);
 		AlephFormatter subtext = template(this.result.userInterface.subtextTemplate);
@@ -97,20 +227,19 @@ public abstract class ResultView {
 		}
 		
 		// *Enrich* the final text and display it
-		TextView textView = (TextView) v.findViewById(R.id.result_text);
-		textView.setText(enrichText(text.fmt(), context));
+		TextView textView = (TextView) this.findViewById(R.id.result_text);
+		textView.setText(enrichText(text.fmt()));
 		
-		TextView subtextView = (TextView) v.findViewById(R.id.result_subtext);
-		subtextView.setText(enrichText(subtext.fmt(), context));
+		TextView subtextView = (TextView) this.findViewById(R.id.result_subtext);
+		subtextView.setText(enrichText(subtext.fmt()));
 		
 		// Hide subtext view if it is empty
 		subtextView.setVisibility(subtextView.getText().length() > 0 ? View.VISIBLE : View.GONE);
 	}
 	
-	
-	protected void displayButtons(Context context, View v) {
+	protected void displayButtons() {
 		// Clear previous contents of button container (in case it was recycled)
-		LinearLayout buttonContainer = (LinearLayout) v.findViewById(R.id.result_extras);
+		LinearLayout buttonContainer = (LinearLayout) this.findViewById(R.id.result_extras);
 		buttonContainer.removeAllViews();
 		
 		if(this.result.userInterface.buttonActions.length < 1) {
@@ -119,7 +248,7 @@ public abstract class ResultView {
 		
 		// Obtain primary color value
 		@ColorInt
-		int primaryColor = Color.parseColor(UiTweaks.getPrimaryColor(context));
+		int primaryColor = Color.parseColor(UiTweaks.getPrimaryColor(this.getContext()));
 		
 		// Calculate darker and lighter version of the color value for styling toggle buttons
 		float[] primaryColorHSV = new float[3];
@@ -152,12 +281,12 @@ public abstract class ResultView {
 		
 		// Get theme background appearance
 		TypedValue background = new TypedValue();
-		context.getTheme().resolveAttribute(R.attr.appSelectableItemBackground, background, true);
+		this.getContext().getTheme().resolveAttribute(R.attr.appSelectableItemBackground, background, true);
 		
 		for(final ButtonAction buttonAction : this.result.userInterface.buttonActions) {
 			switch(buttonAction.type) {
 				case IMAGE_BUTTON:
-					ImageButton imageButton = new ImageButton(context);
+					ImageButton imageButton = new ImageButton(this.getContext());
 					imageButton.setImageBitmap(buttonAction.icon);
 					imageButton.setColorFilter(primaryColor);
 					imageButton.setBackgroundResource(background.resourceId);
@@ -167,7 +296,7 @@ public abstract class ResultView {
 						@Override
 						public void onClick(View v) {
 							try {
-								ResultView.this.result.callbacks.onButtonAction(buttonAction.action, 0);
+								ResultView.this.result.callbacks.onButtonAction(controller, buttonAction.action, 0);
 							} catch(RemoteException e) {
 								// Ignore errors if remote provider went away
 								Log.w("ResultView", "Could not dispatch result view button action to provider");
@@ -178,7 +307,7 @@ public abstract class ResultView {
 					break;
 				
 				case TOGGLE_BUTTON:
-					Switch toggleButton = new Switch(context);
+					Switch toggleButton = new Switch(this.getContext());
 					toggleButton.setEnabled(false);
 					try {
 						Method setThumbTintList = Switch.class.getMethod("setThumbTintList", ColorStateList.class);
@@ -196,7 +325,7 @@ public abstract class ResultView {
 						@Override
 						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 							try {
-								ResultView.this.result.callbacks.onButtonAction(buttonAction.action, isChecked ? 1 : 0);
+								ResultView.this.result.callbacks.onButtonAction(controller, buttonAction.action, isChecked ? 1 : 0);
 							} catch(RemoteException e) {
 								// Ignore errors if remote provider went away
 								Log.w("ResultView", "Could not dispatch result view button action to provider");
@@ -214,19 +343,24 @@ public abstract class ResultView {
 	/**
 	 * Display the icon statically associated with the user-interface of this result (if any)
 	 */
-	protected void displayStaticIcon(Context context, View v) {
-		ImageView icon = (ImageView) v.findViewById(R.id.result_icon);
+	protected void displayStaticIcon() {
+		this.setImageContents(R.id.result_icon,
+				this.result.userInterface.staticIcon,
+				(this.result.userInterface.flags & UserInterface.Flags.TINT_ICON) != 0
+		);
 		
-		if(this.result.userInterface.staticIcon != null) {
-			icon.setImageBitmap(this.result.userInterface.staticIcon);
-		} else {
-			icon.setImageBitmap(null);
-		}
+		((ImageView) this.findViewById(R.id.result_subicon)).setImageBitmap(null);
+	}
+	
+	
+	private void setImageContents(@IdRes int id, @Nullable Bitmap bitmap, boolean tint) {
+		ImageView imageView = (ImageView) this.findViewById(id);
+		imageView.setImageBitmap(bitmap);
 		
-		if((this.result.userInterface.flags & UserInterface.Flags.TINT_ICON) != 0) {
-			icon.setColorFilter(getThemeFillColor(context), PorterDuff.Mode.SRC_IN);
+		if(tint) {
+			imageView.setColorFilter(this.getThemeFillColor(), PorterDuff.Mode.SRC_IN);
 		} else {
-			icon.clearColorFilter();
+			imageView.clearColorFilter();
 		}
 	}
 	
@@ -280,37 +414,18 @@ public abstract class ResultView {
 		
 		return out.toString();
 	}
-	
-	/**
-	 * How to display this record ?
-	 *
-	 * @param context android context
-	 * @param view    a view to be recycled
-	 * @return a view to display as item
-	 */
-	public View display(Context context, int position, View view) {
-		if(view == null) {
-			view = inflate(context);
-		}
-		
-		this.displayText(context, view);
-		this.displayButtons(context, view);
-		this.displayStaticIcon(context, view);
-		
-		return view;
-	}
 
     /**
      * How to display the popup menu
      *
      * @return a PopupMenu object
      */
-    public PopupMenu getPopupMenu(final Context context, final RecordAdapter parent, View parentView) {
-        PopupMenu menu = buildPopupMenu(context, parent, parentView);
+    public PopupMenu getPopupMenu(final RecordAdapter parent, View parentView) {
+        PopupMenu menu = buildPopupMenu(parent, parentView);
 
         menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
-                return popupMenuClickHandler(context, parent, item);
+                return popupMenuClickHandler(parent, item);
             }
         });
 
@@ -322,8 +437,8 @@ public abstract class ResultView {
 	 *
 	 * @return an inflated, listener-free PopupMenu
 	 */
-	PopupMenu buildPopupMenu(Context context, final RecordAdapter parent, View parentView) {
-		PopupMenu menu = this.inflatePopupMenu(R.menu.menu_item_default, context, parentView);
+	PopupMenu buildPopupMenu(final RecordAdapter parent, View parentView) {
+		PopupMenu menu = this.inflatePopupMenu(R.menu.menu_item_default, parentView);
 		
 		// Do not display the "Remove"-entry if the item cannot be removed from the provider
 		if((this.result.userInterface.flags & UserInterface.Flags.REMOVABLE) == 0) {
@@ -346,15 +461,15 @@ public abstract class ResultView {
 		return menu;
 	}
 
-    protected PopupMenu inflatePopupMenu(@MenuRes int menuId, Context context, View parentView) {
-        PopupMenu menu = new PopupMenu(context, parentView);
+    protected PopupMenu inflatePopupMenu(@MenuRes int menuId, View parentView) {
+        PopupMenu menu = new PopupMenu(this.getContext(), parentView);
         menu.getMenuInflater().inflate(menuId, menu.getMenu());
 
         // If app already pinned, do not display the "add to favorite" option
         // otherwise don't show the "remove favorite button"
-        String favApps = PreferenceManager.getDefaultSharedPreferences(context).
+        String favApps = PreferenceManager.getDefaultSharedPreferences(this.getContext()).
                 getString("favorite-apps-list", "");
-        if (favApps.contains(this.pojo.id + ";")) {
+        if (favApps.contains(this.result.id + ";")) {
             menu.getMenu().removeItem(R.id.item_favorites_add);
         } else {
             menu.getMenu().removeItem(R.id.item_favorites_remove);
@@ -362,89 +477,87 @@ public abstract class ResultView {
 
         return menu;
     }
-
-    /**
-     * Handler for popup menu action.
-     * Default implementation only handle remove from history action.
-     *
-     * @return Works in the same way as onOptionsItemSelected, return true if the action has been handled, false otherwise
-     */
-    Boolean popupMenuClickHandler(Context context, RecordAdapter parent, MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.item_remove:
-                removeItem(context, parent);
-                return true;
-            case R.id.item_favorites_add:
-                launchAddToFavorites(context, pojo);
-                break;
-            case R.id.item_favorites_remove:
-                launchRemoveFromFavorites(context, pojo);
-                break;
+	
+	/**
+	 * Handler for popup menu action.
+	 * Default implementation only handle remove from history action.
+	 *
+	 * @return Works in the same way as onOptionsItemSelected, return true if the action has been handled, false otherwise
+	 */
+	Boolean popupMenuClickHandler(RecordAdapter parent, MenuItem item) {
+		switch(item.getItemId()) {
+			case R.id.item_remove:
+				removeItem(parent);
+				return true;
+			case R.id.item_favorites_add:
+				launchAddToFavorites();
+				break;
+			case R.id.item_favorites_remove:
+				launchRemoveFromFavorites();
+				break;
 			default:
 				try {
-					this.result.callbacks.onMenuAction(item.getGroupId());
+					this.result.callbacks.onMenuAction(this.controller, item.getGroupId());
 				} catch(RemoteException e) {
 					// Ignore errors if remote provider went away
 					Log.w("ResultView", "Could not dispatch result view menu action to provider");
 					e.printStackTrace();
 				}
 				return true;
-        }
+		}
+		
+		//Update Search to reflect favorite add, if the "exclude favorites" option is active
+		((MainActivity) this.getContext()).updateRecords();
+		
+		return false;
+	}
 
-        //Update Search to reflect favorite add, if the "exclude favorites" option is active
-        ((MainActivity) context).updateRecords();
+    private void launchAddToFavorites() {
+        String msg = this.getContext().getResources().getString(R.string.toast_favorites_added);
+        KissApplication.getDataHandler(this.getContext()).addToFavorites(this.getContext(), this.result.id);
+        Toast.makeText(this.getContext(), String.format(msg, this.result.name), Toast.LENGTH_SHORT).show();
 
-        return false;
+        ((MainActivity) this.getContext()).displayFavorites();
     }
 
-    private void launchAddToFavorites(Context context, Pojo app) {
-        String msg = context.getResources().getString(R.string.toast_favorites_added);
-        KissApplication.getDataHandler(context).addToFavorites(context, app.id);
-        Toast.makeText(context, String.format(msg, app.name), Toast.LENGTH_SHORT).show();
+    private void launchRemoveFromFavorites() {
+        String msg = this.getContext().getResources().getString(R.string.toast_favorites_removed);
+        KissApplication.getDataHandler(this.getContext()).removeFromFavorites(this.getContext(), this.result.id);
+        Toast.makeText(this.getContext(), String.format(msg, this.result.name), Toast.LENGTH_SHORT).show();
 
-        ((MainActivity) context).displayFavorites();
-    }
-
-    private void launchRemoveFromFavorites(Context context, Pojo app) {
-        String msg = context.getResources().getString(R.string.toast_favorites_removed);
-        KissApplication.getDataHandler(context).removeFromFavorites(context, app.id);
-        Toast.makeText(context, String.format(msg, app.name), Toast.LENGTH_SHORT).show();
-
-        ((MainActivity) context).displayFavorites();
+        ((MainActivity) this.getContext()).displayFavorites();
     }
 
     /**
      * Remove the current result from the list
      *
-     * @param context android context
      * @param parent  adapter on which to remove the item
      */
-    private void removeItem(Context context, RecordAdapter parent) {
-        Toast.makeText(context, R.string.removed_item, Toast.LENGTH_SHORT).show();
+    private void removeItem(RecordAdapter parent) {
+        Toast.makeText(this.getContext(), R.string.removed_item, Toast.LENGTH_SHORT).show();
         parent.removeResultView(this);
     }
 
-    public final void launch(Context context, View v) {
-        Log.i("log", "Launching " + pojo.id);
+    public final void launch(View v) {
+        Log.i("log", "Launching " + this.result.id);
 
-        recordLaunch(context);
+        recordLaunch();
 
         // Launch
-        doLaunch(context, v);
+        doLaunch(v);
     }
 
 	/**
 	 * How to launch this record ? Most probably, will fire an intent.
 	 *
-	 * @param context android context
 	 * @param v The Android view that has caused this action
 	 */
-	protected void doLaunch(Context context, View v) {
+	protected void doLaunch(View v) {
 		try {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-				this.result.callbacks.onLaunch(v.getClipBounds());
+				this.result.callbacks.onLaunch(this.controller, v.getClipBounds());
 			} else {
-				this.result.callbacks.onLaunch(null);
+				this.result.callbacks.onLaunch(this.controller, null);
 			}
 		} catch(RemoteException e) {
 			// Ignore errors if remote provider went away
@@ -457,65 +570,41 @@ public abstract class ResultView {
      * How to launch this record "quickly" ? Most probably, same as doLaunch().
      * Override to define another behavior.
      *
-     * @param context android context
+     * @param v The view that has been interacted with to cause this event
      */
-    public void fastLaunch(Context context, View v) {
-        this.launch(context, v);
+    public void fastLaunch(View v) {
+        this.launch(v);
     }
-
-    /**
-     * Return the icon for this Result, or null if non existing.
-     *
-     * @param context android context
-     */
-    public Drawable getDrawable(Context context) {
-        return null;
-    }
-
-    /**
-     * Helper function to get a view
-     *
-     * @param context android context
-     * @param id      id to inflate
-     * @return the view specified by the id
-     */
-    View inflate(Context context) {
-        LayoutInflater vi = (LayoutInflater) context
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        return vi.inflate(R.layout.result, null);
-    }
-
-    /**
+	
+	/**
      * Enrich text for display. Put text requiring highlighting between {}
      *
      * @param text to highlight
      * @return text displayable on a textview
      */
-    Spanned enrichText(String text, Context context) {
-        return Html.fromHtml(text.replaceAll("\\{", "<font color=" + UiTweaks.getPrimaryColor(context) + ">").replaceAll("\\}", "</font>"));
+    Spanned enrichText(String text) {
+        return Html.fromHtml(text.replaceAll("\\{", "<font color=" + UiTweaks.getPrimaryColor(this.getContext()) + ">").replaceAll("\\}", "</font>"));
     }
 
     /**
      * Put this item in application history
-     *
-     * @param context android context
      */
-    void recordLaunch(Context context) {
+    void recordLaunch() {
         // Save in history
-        KissApplication.getDataHandler(context).addToHistory(pojo.id);
+        KissApplication.getDataHandler(this.getContext()).addToHistory(this.result.id);
     }
 
-    public void deleteRecord(Context context) {
-        DBHelper.removeFromHistory(context, pojo.id);
+    public void deleteRecord() {
+        DBHelper.removeFromHistory(this.getContext(), this.result.id);
     }
 
     /*
      * Get fill color from theme
      *
      */
-    public int getThemeFillColor(Context context) {
+    public int getThemeFillColor() {
         int[] attrs = new int[]{R.attr.resultColor /* index 0 */};
-        TypedArray ta = context.obtainStyledAttributes(attrs);
+        TypedArray ta = this.getContext().obtainStyledAttributes(attrs);
         int color = ta.getColor(0, Color.WHITE);
         ta.recycle();
         return color;

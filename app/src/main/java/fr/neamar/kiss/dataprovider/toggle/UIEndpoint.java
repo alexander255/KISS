@@ -2,10 +2,13 @@ package fr.neamar.kiss.dataprovider.toggle;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.RemoteException;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
+import fr.neamar.kiss.api.provider.IResultController;
 import fr.neamar.kiss.api.provider.MenuAction;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.TogglesPojo;
@@ -50,7 +53,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onLaunch(Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
 			final DataItem    dataItem   = (DataItem)    this.result;
 			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
 			
@@ -58,7 +61,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onButtonAction(int action, int newState) {
+		public void onButtonAction(ResultControllerConnection controller, int action, int newState) {
 			final DataItem    dataItem   = (DataItem)    this.result;
 			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
 			
@@ -94,6 +97,14 @@ public final class UIEndpoint extends UIEndpointBase {
 					
 				}.execute();*/
 			}
+		}
+		
+		@Override
+		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
+			final DataItem    dataItem   = (DataItem)    this.result;
+			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
+			
+			controller.setIcon(drawableToBitmap(togglePojo.icon), true);
 		}
 	}
 }

@@ -6,18 +6,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Shader;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
-import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.ContactsPojo;
@@ -41,6 +50,8 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	@Override
 	protected void onBuildUserInterface() {
+		final Bitmap icon = this.drawableToBitmap(R.drawable.ic_contact);
+		
 		final MenuAction[] menuActions = new MenuAction[] {
 				new MenuAction(ACTION_COPY_NUMBER, context.getString(R.string.menu_contact_copy_phone))
 		};
@@ -50,7 +61,7 @@ public final class UIEndpoint extends UIEndpointBase {
 			this.userInterface = this.userInterface_noMessage = new UserInterface(
 					"#{name}", "#{phone}",
 					menuActions, new ButtonAction[0],
-					null, UserInterface.Flags.FAVOURABLE
+					icon, UserInterface.Flags.FAVOURABLE
 			);
 		} else {
 			final Bitmap iconPhone   = this.drawableToBitmap(R.drawable.ic_phone);
@@ -65,13 +76,13 @@ public final class UIEndpoint extends UIEndpointBase {
 			this.userInterface_noMessage = new UserInterface(
 					"#{name}", "#{phone}",
 					menuActions, buttons1,
-					null, UserInterface.Flags.FAVOURABLE
+					icon, UserInterface.Flags.FAVOURABLE
 			);
 			
 			this.userInterface = new UserInterface(
 					"#{name}", "#{phone}",
 					menuActions, buttons2,
-					null, UserInterface.Flags.FAVOURABLE
+					icon, UserInterface.Flags.FAVOURABLE
 			);
 		}
 	}
@@ -83,7 +94,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(int action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) {
 			switch (action) {
 				case ACTION_COPY_NUMBER:
 					this.copyPhone();
@@ -92,7 +103,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onButtonAction(int action, int newState) throws RemoteException {
+		public void onButtonAction(ResultControllerConnection controller, int action, int newState) throws RemoteException {
 			switch(action) {
 				case ACTION_CALL:
 					launchCall();
@@ -105,7 +116,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onLaunch(Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
 			final DataItem     dataItem    = (DataItem)     this.result;
 			final ContactsPojo contactPojo = (ContactsPojo) dataItem.pojo;
 			
@@ -121,6 +132,11 @@ public final class UIEndpoint extends UIEndpointBase {
 			viewContact.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			viewContact.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
 			context.startActivity(viewContact);
+		}
+		
+		@Override
+		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
+			controller.setIcon(this.createIcon(), false);
 		}
 		
 		
@@ -174,6 +190,48 @@ public final class UIEndpoint extends UIEndpointBase {
 					//queryInterface.launchOccurred(-1, ContactsResult.this);
 				}
 			}, KissApplication.TOUCH_DELAY);
+		}
+		
+		
+		private Bitmap createBasicIcon() {
+			final DataItem     dataItem    = (DataItem)     this.result;
+			final ContactsPojo contactPojo = (ContactsPojo) dataItem.pojo;
+			
+			if(contactPojo.icon != null) {
+				InputStream inputStream = null;
+				try {
+					inputStream = context.getContentResolver().openInputStream(contactPojo.icon);
+					return BitmapFactory.decodeStream(inputStream);
+				} catch (FileNotFoundException ignored) {
+				} finally {
+					if (inputStream != null) {
+						try {
+							inputStream.close();
+						} catch (IOException ignored) {
+						}
+					}
+				}
+			}
+			
+			return userInterface.staticIcon;
+		}
+		
+		private Bitmap createIcon() {
+			final int width  = 48;
+			final int height = 48;
+			
+			// Obtain contact image
+			Bitmap bitmap = this.createBasicIcon();
+			
+			// Draw circular center of bitmap (based on http://stackoverflow.com/a/18642747/277882)
+			Paint paint = new Paint();
+			paint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+			paint.setAntiAlias(true);
+			bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+			Canvas canvas = new Canvas(bitmap);
+			canvas.drawCircle(width / 2, height / 2, width < height ? width / 2 : height / 2, paint);
+			
+			return bitmap;
 		}
 	}
 }

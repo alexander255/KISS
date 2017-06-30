@@ -7,6 +7,7 @@ import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.preference.PreferenceManager;
 
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.api.provider.Result;
@@ -64,5 +65,11 @@ public class DataItem extends Result {
 		this.determineUserInterface(uiEndpoint);
 		
 		this.className = new ComponentName(appPojo.packageName, appPojo.activityName);
+		
+		//Hide tags if user has selected to hide them and the query doesn't match any tags
+		if(!PreferenceManager.getDefaultSharedPreferences(uiEndpoint.getContext()).getBoolean("tags-visible", true)
+		&& appPojo.displayTags.equals(appPojo.tags)) {
+			this.templateParameters.remove("tags");
+		}
 	}
 }

@@ -1,17 +1,25 @@
 package fr.neamar.kiss.dataprovider.shortcut;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.RemoteException;
 import android.widget.Toast;
+
+import java.net.URISyntaxException;
+import java.util.List;
 
 import fr.neamar.kiss.DataHandler;
 import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
-import fr.neamar.kiss.api.provider.Result;
+import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
@@ -48,8 +56,8 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(int action) {
-			switch (action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) {
+			switch(action) {
 				case ACTION_REMOVE:
 					doRemove();
 					break;
@@ -57,7 +65,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onLaunch(Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
 			final DataItem      dataItem     = (DataItem)      this.result;
 			final ShortcutsPojo shortcutPojo = (ShortcutsPojo) dataItem.pojo;
 			
@@ -74,6 +82,19 @@ public final class UIEndpoint extends UIEndpointBase {
 			}
 		}
 		
+		@Override
+		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
+			final DataItem      dataItem     = (DataItem)      this.result;
+			final ShortcutsPojo shortcutPojo = (ShortcutsPojo) dataItem.pojo;
+			
+			Bitmap appIcon = this.createAppIcon();
+			
+			if(appIcon != null && shortcutPojo.icon != null) {
+				controller.setIcon(shortcutPojo.icon, false);
+				controller.setSubicon(appIcon, false);
+			}
+		}
+		
 		
 		private void doRemove() {
 			final DataItem      dataItem     = (DataItem)      this.result;
@@ -85,6 +106,32 @@ public final class UIEndpoint extends UIEndpointBase {
 			}
 			
 			reloadLauncher();
+		}
+		
+		
+		/**
+		 * Retrieve package icon for this shortcut
+		 */
+		private Bitmap createAppIcon() {
+			final DataItem      dataItem     = (DataItem)      this.result;
+			final ShortcutsPojo shortcutPojo = (ShortcutsPojo) dataItem.pojo;
+			
+			final PackageManager packageManager = context.getPackageManager();
+			try {
+				Intent intent = Intent.parseUri(shortcutPojo.intentUri, 0);
+				List<ResolveInfo> packages = packageManager.queryIntentActivities(intent, 0);
+				if(packages.size() > 0) {
+					ResolveInfo mainPackage = packages.get(0);
+					String packageName = mainPackage.activityInfo.applicationInfo.packageName;
+					String activityName = mainPackage.activityInfo.name;
+					ComponentName className = new ComponentName(packageName, activityName);
+					return drawableToBitmap(packageManager.getActivityIcon(className));
+				}
+			} catch (PackageManager.NameNotFoundException | URISyntaxException e) {
+				e.printStackTrace();
+			}
+			
+			return null;
 		}
 	}
 }

@@ -1,7 +1,9 @@
 package fr.neamar.kiss.searcher;
 
-import fr.neamar.kiss.result.ResultView;
+import android.view.View;
+
+import fr.neamar.kiss.ui.ResultView;
 
 public interface QueryInterface {
-    void launchOccurred(int index, ResultView result);
+	void launchOccurred(ResultView result, View reason);
 }
