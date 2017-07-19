@@ -45,7 +45,7 @@ public final class UIEndpoint extends UIEndpointBase {
 				},
 				new ButtonAction[0],
 				this.drawableToBitmap(android.R.drawable.ic_menu_send),
-				UserInterface.Flags.FAVOURABLE
+				UserInterface.Flags.FAVOURABLE | UserInterface.Flags.ASYNC
 		);
 	}
 	
@@ -93,6 +93,7 @@ public final class UIEndpoint extends UIEndpointBase {
 				controller.setIcon(shortcutPojo.icon, false);
 				controller.setSubicon(appIcon, false);
 			}
+			controller.notifyReady();
 		}
 		
 		

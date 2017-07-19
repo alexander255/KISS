@@ -6,7 +6,6 @@ import android.os.RemoteException;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
-import fr.neamar.kiss.api.provider.IResultController;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.api.provider.UserInterface;
@@ -35,7 +34,7 @@ public final class UIEndpoint extends UIEndpointBase {
 				new MenuAction[0],
 				new ButtonAction[] {
 						new ButtonAction(ACTION_TOGGLE, ButtonAction.Type.TOGGLE_BUTTON, "Toggle")
-				}
+				}, UserInterface.Flags.DEFAULT | UserInterface.Flags.ASYNC
 		);
 	}
 	
@@ -105,6 +104,7 @@ public final class UIEndpoint extends UIEndpointBase {
 			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
 			
 			controller.setIcon(drawableToBitmap(togglePojo.icon), true);
+			controller.notifyReady();
 		}
 	}
 }

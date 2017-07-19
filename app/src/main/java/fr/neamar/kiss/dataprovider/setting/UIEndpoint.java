@@ -31,7 +31,7 @@ public final class UIEndpoint extends UIEndpointBase {
 				String.format("<small><small>%s</small></small> #{name}", context.getString(R.string.settings_prefix)), "",
 				new MenuAction[0], new ButtonAction[0],
 				this.drawableToBitmap(android.R.drawable.ic_menu_manage),
-				UserInterface.Flags.DEFAULT | UserInterface.Flags.TINT_ICON
+				UserInterface.Flags.DEFAULT | UserInterface.Flags.TINT_ICON | UserInterface.Flags.ASYNC
 		);
 	}
 	
@@ -62,6 +62,7 @@ public final class UIEndpoint extends UIEndpointBase {
 			if(settingPojo.icon != -1) {
 				controller.setIcon(drawableToBitmap(settingPojo.icon), true);
 			}
+			controller.notifyReady();
 		}
 	}
 }

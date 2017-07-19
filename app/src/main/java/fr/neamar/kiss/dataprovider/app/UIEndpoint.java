@@ -68,10 +68,12 @@ public final class UIEndpoint extends UIEndpointBase {
 				new MenuAction(ACTION_HIBERNATE, context.getString(R.string.menu_app_hibernate))
 		};
 		
-		this.userInterface = new UserInterface("#{name}", "#{tags}", ACTIONS_BASE);
-		this.userInterface_withUninstall = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_UNINSTALL));
-		this.userInterface_withRoot      = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_ROOT));
-		this.userInterface_withBoth      = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_UNINSTALL, ACTIONS_ROOT));
+		final int flags = UserInterface.Flags.DEFAULT | UserInterface.Flags.ASYNC;
+		
+		this.userInterface = new UserInterface("#{name}", "#{tags}", ACTIONS_BASE, flags);
+		this.userInterface_withUninstall = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_UNINSTALL), flags);
+		this.userInterface_withRoot      = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_ROOT), flags);
+		this.userInterface_withBoth      = new UserInterface("#{name}", "#{tags}", concat(ACTIONS_BASE, ACTIONS_UNINSTALL, ACTIONS_ROOT), flags);
 	}
 	
 	
@@ -156,6 +158,8 @@ public final class UIEndpoint extends UIEndpointBase {
 				Bitmap icon = drawableToBitmap(KissApplication.getIconsHandler(context).getDrawableIconForPackage(dataItem.className, appPojo.userHandle));
 				controller.setIcon(icon, false);
 			}
+			
+			controller.notifyReady();
 		}
 		
 		

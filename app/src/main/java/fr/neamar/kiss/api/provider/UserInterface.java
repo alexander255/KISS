@@ -20,9 +20,12 @@ public final class UserInterface implements Parcelable {
 		public final static int FAVOURABLE = 0x00000002;
 		/// Should the static icon be tinted based on the currently selected launcher base color?
 		public final static int TINT_ICON  = 0x00000004;
+		/// Does displaying results of this interface need to wait for a call to
+		/// `controller.notifyReady()` from the provider?
+		public final static int ASYNC      = 0x00000008;
 		
 		public final static int DEFAULT = REMOVABLE | FAVOURABLE;
-		public final static int ALL     = REMOVABLE | FAVOURABLE | TINT_ICON;
+		public final static int ALL     = REMOVABLE | FAVOURABLE | TINT_ICON | ASYNC;
 	}
 	
 	/// Pre-formatted result text template
@@ -80,15 +83,27 @@ public final class UserInterface implements Parcelable {
 	};
 	
 	public UserInterface(String textTemplate) {
-		this(textTemplate, "", new MenuAction[] {});
+		this(textTemplate, "", new MenuAction[0]);
+	}
+	
+	public UserInterface(String textTemplate, int flags) {
+		this(textTemplate, "", new MenuAction[0], flags);
 	}
 	
 	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions) {
-		this(textTemplate, subtextTemplate, menuActions, new ButtonAction[] {});
+		this(textTemplate, subtextTemplate, menuActions, new ButtonAction[0]);
+	}
+	
+	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, int flags) {
+		this(textTemplate, subtextTemplate, menuActions, new ButtonAction[0], flags);
 	}
 	
 	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions) {
 		this(textTemplate, subtextTemplate, menuActions, buttonActions, null);
+	}
+	
+	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions, int flags) {
+		this(textTemplate, subtextTemplate, menuActions, buttonActions, null, flags);
 	}
 	
 	public UserInterface(String textTemplate, String subtextTemplate, MenuAction[] menuActions, ButtonAction[] buttonActions, Bitmap staticIcon) {

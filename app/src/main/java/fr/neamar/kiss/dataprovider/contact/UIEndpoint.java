@@ -82,7 +82,8 @@ public final class UIEndpoint extends UIEndpointBase {
 			this.userInterface = new UserInterface(
 					"#{name}", "#{phone}",
 					menuActions, buttons2,
-					icon, UserInterface.Flags.FAVOURABLE
+					icon,
+					UserInterface.Flags.FAVOURABLE | UserInterface.Flags.ASYNC
 			);
 		}
 	}
@@ -137,6 +138,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		@Override
 		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
 			controller.setIcon(this.createIcon(), false);
+			controller.notifyReady();
 		}
 		
 		

@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Build;
-import android.os.Handler;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.ColorInt;
@@ -44,7 +43,6 @@ import fr.neamar.kiss.R;
 import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
 import fr.neamar.kiss.api.provider.ButtonAction;
-import fr.neamar.kiss.api.provider.IResultController;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.api.provider.ResultControllerConnection;
@@ -53,59 +51,12 @@ import fr.neamar.kiss.db.DBHelper;
 import fr.neamar.kiss.searcher.QueryInterface;
 
 
-public class ResultView extends RelativeLayout {
+public class ResultView extends RelativeLayout implements ResultStateManager.IRenderer {
 	/**
-	 * Result item that is currently being rendered
+	 * Result state manager for the result item being currently rendered
 	 */
-	private Result result = null;
-	
-	/**
-	 * Callback interface for the remote provider to influence rendering of the current result item
-	 */
-	private ResultControllerConnection controller = null;
-	
-	private final static class ResultController extends IResultController.Stub {
-		/// Result view that may be controlled by this result controller
-		/// (if `null` the controller will do nothing)
-		private ResultView resultView;
-		
-		/// Handler used for processing requests on the main thread
-		/// (they may be dispatched from any thread)
-		private final Handler handler;
-		
-		ResultController(ResultView resultView) {
-			this.resultView = resultView;
-			this.handler    = new Handler(resultView.getContext().getMainLooper());
-		}
-		
-		void detachFromResultView() {
-			this.resultView = null;
-		}
-		
-		@Override
-		public void setIcon(final Bitmap icon, final boolean tintIcon) {
-			this.handler.post(new Runnable() {
-				@Override
-				public void run() {
-					if(resultView != null) {
-						resultView.setImageContents(R.id.result_icon, icon, tintIcon);
-					}
-				}
-			});
-		}
-		
-		@Override
-		public void setSubicon(final Bitmap icon, final boolean tintIcon) {
-			this.handler.post(new Runnable() {
-				@Override
-				public void run() {
-					if(resultView != null) {
-						resultView.setImageContents(R.id.result_subicon, icon, tintIcon);
-					}
-				}
-			});
-		}
-	}
+	//@Nullable
+	private ResultStateManager stateManager = null;
 	
 	
 	
@@ -139,21 +90,33 @@ public class ResultView extends RelativeLayout {
 	 *
 	 * @param context UI Context that will host this View
 	 * @param parent
-	 * @param result Result instance to initially render on this View
+	 * @param stateManager Object containing the result to render as well as all dynamic UI state
 	 */
-	public static ResultView create(Context context, QueryInterface parent, @Nullable Result result) {
+	public static ResultView create(Context context, QueryInterface parent, @Nullable ResultStateManager stateManager) {
 		LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		ResultView resultView = (ResultView) inflater.inflate(R.layout.result, null);
-		resultView.setResult(result);
+		resultView.setStateManager(stateManager);
 		return resultView;
 	}
 	
 	
 	@Override
 	protected void onDetachedFromWindow() {
-		this.setResult(null);
+		if(this.stateManager != null) {
+			this.stateManager.detachFromRenderer();
+		}
 		
 		super.onDetachedFromWindow();
+	}
+	
+	@Override
+	public void onStateManagerAttached(ResultStateManager stateManager) {
+		this.stateManager = stateManager;
+	}
+	
+	@Override
+	public void onStateManagerDetached(ResultStateManager stateManager) {
+		this.stateManager = null;
 	}
 	
 	
@@ -161,67 +124,53 @@ public class ResultView extends RelativeLayout {
 	 * @return The result object that this view will attempt to render
 	 */
 	public Result getResult() {
-		return this.result;
+		return (this.stateManager != null) ? this.stateManager.getResult() : null;
 	}
 	
 	/**
-	 * Change the result object wrapped by this view
+	 * Change the state manager used to manage this view
 	 *
 	 * This will also terminate any `IResultController` connections that may be currently active
-	 * on this view.
-	 *
-	 * @param result The new result that should be rendered by this view
+	 * on this view and remove all callbacks added with `registerResultReadyCallback`.
 	 */
-	public void setResult(@Nullable Result result) {
+	public void setStateManager(@Nullable ResultStateManager stateManager) {
 		// Do nothing if the result actually stays the same
-		if(result == this.result) {
+		if(stateManager == this.stateManager) {
 			return;
 		}
 		
-		
 		// Disarm controller instance and notify the connected provider that their result is
 		// disappearing
-		if(this.controller != null) {
-			((ResultController) this.controller.controller).detachFromResultView();
-			try {
-				this.result.callbacks.onDestroy(this.controller);
-			} catch(RemoteException e) {
-				Log.w("ResultView", "Could not dispatch result view hide event to provider");
-				e.printStackTrace();
-			}
+		if(this.stateManager != null) {
+			this.stateManager.detachFromRenderer();
 		}
 		
 		// Set new state
-		this.controller = null;
-		this.result     = result;
+		this.stateManager = stateManager;
 		
-		if(this.result != null) {
+		if(this.stateManager != null) {
 			// Build view tree for new result
 			this.displayText();
 			this.displayButtons();
 			this.displayStaticIcon();
 			
-			// Notify the provider of the new result that it is now going to be shown
-			this.controller = new ResultControllerConnection(new ResultController(this));
-			try {
-				this.result.callbacks.onCreate(this.controller);
-			} catch(RemoteException e) {
-				Log.w("ResultView", "Could not dispatch result view show event to provider");
-				e.printStackTrace();
-			}
+			this.stateManager.attachToRenderer(this);
 		}
 	}
+	
 	
 	/**
 	 * Render the text of this result based on its UI description
 	 */
 	protected void displayText() {
+		final Result result = this.stateManager.getResult();
+		
 		// Put text rendering templates into templating engine
-		AlephFormatter text    = template(this.result.userInterface.textTemplate);
-		AlephFormatter subtext = template(this.result.userInterface.subtextTemplate);
+		AlephFormatter text    = template(result.userInterface.textTemplate);
+		AlephFormatter subtext = template(result.userInterface.subtextTemplate);
 		
 		// Apply template substitutions
-		for(Map.Entry<String, String> entry : this.result.templateParameters.entrySet()) {
+		for(Map.Entry<String, String> entry : result.templateParameters.entrySet()) {
 			text    = text.arg(entry.getKey(), escapeHtml(entry.getValue()));
 			subtext = subtext.arg(entry.getKey(), escapeHtml(entry.getValue()));
 		}
@@ -238,11 +187,14 @@ public class ResultView extends RelativeLayout {
 	}
 	
 	protected void displayButtons() {
+		final Result                     result     = this.stateManager.getResult();
+		final ResultControllerConnection controller = this.stateManager.getController();
+		
 		// Clear previous contents of button container (in case it was recycled)
 		LinearLayout buttonContainer = (LinearLayout) this.findViewById(R.id.result_extras);
 		buttonContainer.removeAllViews();
 		
-		if(this.result.userInterface.buttonActions.length < 1) {
+		if(result.userInterface.buttonActions.length < 1) {
 			return;
 		}
 		
@@ -283,7 +235,7 @@ public class ResultView extends RelativeLayout {
 		TypedValue background = new TypedValue();
 		this.getContext().getTheme().resolveAttribute(R.attr.appSelectableItemBackground, background, true);
 		
-		for(final ButtonAction buttonAction : this.result.userInterface.buttonActions) {
+		for(final ButtonAction buttonAction : result.userInterface.buttonActions) {
 			switch(buttonAction.type) {
 				case IMAGE_BUTTON:
 					ImageButton imageButton = new ImageButton(this.getContext());
@@ -296,7 +248,7 @@ public class ResultView extends RelativeLayout {
 						@Override
 						public void onClick(View v) {
 							try {
-								ResultView.this.result.callbacks.onButtonAction(controller, buttonAction.action, 0);
+								result.callbacks.onButtonAction(controller, buttonAction.action, 0);
 							} catch(RemoteException e) {
 								// Ignore errors if remote provider went away
 								Log.w("ResultView", "Could not dispatch result view button action to provider");
@@ -325,7 +277,7 @@ public class ResultView extends RelativeLayout {
 						@Override
 						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 							try {
-								ResultView.this.result.callbacks.onButtonAction(controller, buttonAction.action, isChecked ? 1 : 0);
+								result.callbacks.onButtonAction(controller, buttonAction.action, isChecked ? 1 : 0);
 							} catch(RemoteException e) {
 								// Ignore errors if remote provider went away
 								Log.w("ResultView", "Could not dispatch result view button action to provider");
@@ -344,9 +296,11 @@ public class ResultView extends RelativeLayout {
 	 * Display the icon statically associated with the user-interface of this result (if any)
 	 */
 	protected void displayStaticIcon() {
+		final Result result = this.stateManager.getResult();
+		
 		this.setImageContents(R.id.result_icon,
-				this.result.userInterface.staticIcon,
-				(this.result.userInterface.flags & UserInterface.Flags.TINT_ICON) != 0
+				result.userInterface.staticIcon,
+				(result.userInterface.flags & UserInterface.Flags.TINT_ICON) != 0
 		);
 		
 		((ImageView) this.findViewById(R.id.result_subicon)).setImageBitmap(null);
@@ -362,6 +316,16 @@ public class ResultView extends RelativeLayout {
 		} else {
 			imageView.clearColorFilter();
 		}
+	}
+	
+	@Override
+	public void displayIcon(Bitmap icon, boolean tintIcon) {
+		this.setImageContents(R.id.result_icon, icon, tintIcon);
+	}
+	
+	@Override
+	public void displaySubicon(Bitmap icon, boolean tintIcon) {
+		this.setImageContents(R.id.result_subicon, icon, tintIcon);
 	}
 	
 	
@@ -438,21 +402,23 @@ public class ResultView extends RelativeLayout {
 	 * @return an inflated, listener-free PopupMenu
 	 */
 	PopupMenu buildPopupMenu(final RecordAdapter parent, View parentView) {
+		final Result result = this.stateManager.getResult();
+		
 		PopupMenu menu = this.inflatePopupMenu(R.menu.menu_item_default, parentView);
 		
 		// Do not display the "Remove"-entry if the item cannot be removed from the provider
-		if((this.result.userInterface.flags & UserInterface.Flags.REMOVABLE) == 0) {
+		if((result.userInterface.flags & UserInterface.Flags.REMOVABLE) == 0) {
 			menu.getMenu().removeItem(R.id.item_remove);
 		}
 		
 		// Do not display the "Add to Favourites"-entry if the item may not be added to
 		// that list
-		if((this.result.userInterface.flags & UserInterface.Flags.FAVOURABLE) == 0) {
+		if((result.userInterface.flags & UserInterface.Flags.FAVOURABLE) == 0) {
 			menu.getMenu().removeItem(R.id.item_favorites_add);
 		}
 		
 		// Add custom menu actions
-		for(MenuAction item : this.result.userInterface.menuActions) {
+		for(MenuAction item : result.userInterface.menuActions) {
 			// Note that we abuse the created menu item's group ID here for storing the action
 			// number of the clicked menu item
 			menu.getMenu().add(item.action, 0, 0, item.title);
@@ -460,23 +426,25 @@ public class ResultView extends RelativeLayout {
 		
 		return menu;
 	}
-
-    protected PopupMenu inflatePopupMenu(@MenuRes int menuId, View parentView) {
-        PopupMenu menu = new PopupMenu(this.getContext(), parentView);
-        menu.getMenuInflater().inflate(menuId, menu.getMenu());
-
-        // If app already pinned, do not display the "add to favorite" option
-        // otherwise don't show the "remove favorite button"
-        String favApps = PreferenceManager.getDefaultSharedPreferences(this.getContext()).
-                getString("favorite-apps-list", "");
-        if (favApps.contains(this.result.id + ";")) {
-            menu.getMenu().removeItem(R.id.item_favorites_add);
-        } else {
-            menu.getMenu().removeItem(R.id.item_favorites_remove);
-        }
-
-        return menu;
-    }
+	
+	protected PopupMenu inflatePopupMenu(@MenuRes int menuId, View parentView) {
+		final Result result = this.stateManager.getResult();
+		
+		PopupMenu menu = new PopupMenu(this.getContext(), parentView);
+		menu.getMenuInflater().inflate(menuId, menu.getMenu());
+		
+		// If app already pinned, do not display the "add to favorite" option
+		// otherwise don't show the "remove favorite button"
+		String favApps = PreferenceManager.getDefaultSharedPreferences(this.getContext()).
+				getString("favorite-apps-list", "");
+		if(favApps.contains(result.id + ";")) {
+			menu.getMenu().removeItem(R.id.item_favorites_add);
+		} else {
+			menu.getMenu().removeItem(R.id.item_favorites_remove);
+		}
+		
+		return menu;
+	}
 	
 	/**
 	 * Handler for popup menu action.
@@ -485,6 +453,9 @@ public class ResultView extends RelativeLayout {
 	 * @return Works in the same way as onOptionsItemSelected, return true if the action has been handled, false otherwise
 	 */
 	Boolean popupMenuClickHandler(RecordAdapter parent, MenuItem item) {
+		final Result                     result     = this.stateManager.getResult();
+		final ResultControllerConnection controller = this.stateManager.getController();
+		
 		switch(item.getItemId()) {
 			case R.id.item_remove:
 				removeItem(parent);
@@ -497,7 +468,7 @@ public class ResultView extends RelativeLayout {
 				break;
 			default:
 				try {
-					this.result.callbacks.onMenuAction(this.controller, item.getGroupId());
+					result.callbacks.onMenuAction(controller, item.getGroupId());
 				} catch(RemoteException e) {
 					// Ignore errors if remote provider went away
 					Log.w("ResultView", "Could not dispatch result view menu action to provider");
@@ -511,53 +482,61 @@ public class ResultView extends RelativeLayout {
 		
 		return false;
 	}
-
-    private void launchAddToFavorites() {
-        String msg = this.getContext().getResources().getString(R.string.toast_favorites_added);
-        KissApplication.getDataHandler(this.getContext()).addToFavorites(this.getContext(), this.result.id);
-        Toast.makeText(this.getContext(), String.format(msg, this.result.name), Toast.LENGTH_SHORT).show();
-
-        ((MainActivity) this.getContext()).displayFavorites();
-    }
-
-    private void launchRemoveFromFavorites() {
-        String msg = this.getContext().getResources().getString(R.string.toast_favorites_removed);
-        KissApplication.getDataHandler(this.getContext()).removeFromFavorites(this.getContext(), this.result.id);
-        Toast.makeText(this.getContext(), String.format(msg, this.result.name), Toast.LENGTH_SHORT).show();
-
-        ((MainActivity) this.getContext()).displayFavorites();
-    }
-
-    /**
-     * Remove the current result from the list
-     *
-     * @param parent  adapter on which to remove the item
-     */
-    private void removeItem(RecordAdapter parent) {
-        Toast.makeText(this.getContext(), R.string.removed_item, Toast.LENGTH_SHORT).show();
-        parent.removeResultView(this);
-    }
-
-    public final void launch(View v) {
-        Log.i("log", "Launching " + this.result.id);
-
-        recordLaunch();
-
-        // Launch
-        doLaunch(v);
-    }
-
+	
+	private void launchAddToFavorites() {
+		final Result result = this.stateManager.getResult();
+		
+		String msg = this.getContext().getResources().getString(R.string.toast_favorites_added);
+		KissApplication.getDataHandler(this.getContext()).addToFavorites(this.getContext(), result.id);
+		Toast.makeText(this.getContext(), String.format(msg, result.name), Toast.LENGTH_SHORT).show();
+		
+		((MainActivity) this.getContext()).displayFavorites();
+	}
+	
+	private void launchRemoveFromFavorites() {
+		final Result result = this.stateManager.getResult();
+		
+		String msg = this.getContext().getResources().getString(R.string.toast_favorites_removed);
+		KissApplication.getDataHandler(this.getContext()).removeFromFavorites(this.getContext(), result.id);
+		Toast.makeText(this.getContext(), String.format(msg, result.name), Toast.LENGTH_SHORT).show();
+		
+		((MainActivity) this.getContext()).displayFavorites();
+	}
+	
+	/**
+	 * Remove the current result from the list
+	 *
+	 * @param parent adapter on which to remove the item
+	 */
+	private void removeItem(RecordAdapter parent) {
+		Toast.makeText(this.getContext(), R.string.removed_item, Toast.LENGTH_SHORT).show();
+		parent.removeResultView(this);
+	}
+	
+	public final void launch(View v) {
+		final Result result = this.stateManager.getResult();
+		Log.i("log", "Launching " + result.id);
+		
+		recordLaunch();
+		
+		// Launch
+		doLaunch(v);
+	}
+	
 	/**
 	 * How to launch this record ? Most probably, will fire an intent.
 	 *
 	 * @param v The Android view that has caused this action
 	 */
 	protected void doLaunch(View v) {
+		final Result                     result     = this.stateManager.getResult();
+		final ResultControllerConnection controller = this.stateManager.getController();
+		
 		try {
 			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-				this.result.callbacks.onLaunch(this.controller, v.getClipBounds());
+				result.callbacks.onLaunch(controller, v.getClipBounds());
 			} else {
-				this.result.callbacks.onLaunch(this.controller, null);
+				result.callbacks.onLaunch(controller, null);
 			}
 		} catch(RemoteException e) {
 			// Ignore errors if remote provider went away
@@ -585,18 +564,22 @@ public class ResultView extends RelativeLayout {
     Spanned enrichText(String text) {
         return Html.fromHtml(text.replaceAll("\\{", "<font color=" + UiTweaks.getPrimaryColor(this.getContext()) + ">").replaceAll("\\}", "</font>"));
     }
-
-    /**
-     * Put this item in application history
-     */
-    void recordLaunch() {
-        // Save in history
-        KissApplication.getDataHandler(this.getContext()).addToHistory(this.result.id);
-    }
-
-    public void deleteRecord() {
-        DBHelper.removeFromHistory(this.getContext(), this.result.id);
-    }
+	
+	/**
+	 * Put this item in application history
+	 */
+	void recordLaunch() {
+		final Result result = this.stateManager.getResult();
+		
+		// Save in history
+		KissApplication.getDataHandler(this.getContext()).addToHistory(result.id);
+	}
+	
+	public void deleteRecord() {
+		final Result result = this.stateManager.getResult();
+		
+		DBHelper.removeFromHistory(this.getContext(), result.id);
+	}
 
     /*
      * Get fill color from theme

@@ -61,6 +61,9 @@ public final class ResultControllerConnection implements Parcelable {
 	public void setSubicon(Bitmap icon, boolean tintIcon) throws RemoteException {
 		this.controller.setSubicon(icon, tintIcon);
 	}
+	public void notifyReady() throws RemoteException {
+		this.controller.notifyReady();
+	}
 	
 	
 	@Override

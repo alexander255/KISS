@@ -36,7 +36,10 @@ public class HistorySearcher extends Searcher {
         if(excludeFavorites){
             favoriteResults = KissApplication.getDataHandler(activity).getFavorites(activity.tryToRetrieve);
         }
-
-        return KissApplication.getDataHandler(activity).getHistory(activity, maxRecords, smartHistory, favoriteResults);
+    
+        // Ask for records
+        final List<Result> results = KissApplication.getDataHandler(activity).getHistory(activity, maxRecords, smartHistory, favoriteResults);
+        this.preloadResults(results);
+        return results;
     }
 }

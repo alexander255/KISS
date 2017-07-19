@@ -152,6 +152,7 @@ public abstract class UIEndpointBase {
 		
 		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
 			// Asynchronous version of `onShow`
+			controller.notifyReady();
 		}
 		
 		@Override

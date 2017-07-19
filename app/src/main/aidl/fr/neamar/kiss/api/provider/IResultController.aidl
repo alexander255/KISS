@@ -5,4 +5,5 @@ package fr.neamar.kiss.api.provider;
 interface IResultController {
 	oneway void setIcon(in Bitmap icon, boolean tintIcon);
 	oneway void setSubicon(in Bitmap icon, boolean tintIcon);
+	oneway void notifyReady();
 }

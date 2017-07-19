@@ -52,6 +52,7 @@ import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.broadcast.IncomingCallHandler;
 import fr.neamar.kiss.broadcast.IncomingSmsHandler;
 import fr.neamar.kiss.dataprovider.AppProvider;
+import fr.neamar.kiss.ui.ResultStateManager;
 import fr.neamar.kiss.ui.ResultView;
 import fr.neamar.kiss.searcher.ApplicationsSearcher;
 import fr.neamar.kiss.searcher.HistorySearcher;
@@ -341,12 +342,12 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
                 ArrayList<Result> favorites = KissApplication.getDataHandler(MainActivity.this).getFavorites(tryToRetrieve);
                 if (favNumber >= favorites.size()) {
                     // Clicking on a favorite before everything is loaded.
-                    Log.i(TAG, "Long clicking on an unitialized favorite.");
+                    Log.i(TAG, "Long clicking on an uninitialized favorite.");
                     return false;
                 }
                 // Favorites handling
                 Result result = favorites.get(favNumber);
-                final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, result);
+                final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, new ResultStateManager(result));
                 resultView.getPopupMenu(adapter, view).show();
                 return true;
             }
@@ -602,12 +603,12 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         ArrayList<Result> favorites = KissApplication.getDataHandler(MainActivity.this).getFavorites(tryToRetrieve);
         if (favNumber >= favorites.size()) {
             // Clicking on a favorite before everything is loaded.
-            Log.i(TAG, "Clicking on an unitialized favorite.");
+            Log.i(TAG, "Clicking on an uninitialized favorite.");
             return;
         }
         // Favorites handling
         Result result = favorites.get(favNumber);
-        final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, result);
+        final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, new ResultStateManager(result));
 
         resultView.fastLaunch(favorite);
     }
@@ -748,21 +749,24 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
                 image.setImageResource(R.drawable.ic_contact);
             }
     
-            try {
-                result.callbacks.onCreate(new ResultControllerConnection(new IResultController.Stub() {
-                    @Override
-                    public void setIcon(Bitmap icon, boolean tintIcon) throws RemoteException {
-                        image.setImageBitmap(icon);
-                    }
-                    
-                    @Override
-                    public void setSubicon(Bitmap icon, boolean tintIcon) throws RemoteException {
-                        // Not supported when displaying favourites
-                    }
-                }));
-            } catch(RemoteException e) {
-                e.printStackTrace();
-            }
+            ResultStateManager stateManager = new ResultStateManager(result);
+            stateManager.attachToRenderer(new ResultStateManager.IRenderer() {
+                @Override
+                public void onStateManagerAttached(ResultStateManager stateManager) {}
+                
+                @Override
+                public void onStateManagerDetached(ResultStateManager stateManager) {}
+                
+                @Override
+                public void displayIcon(Bitmap icon, boolean tintIcon) {
+                    image.setImageBitmap(icon);
+                }
+                
+                @Override
+                public void displaySubicon(Bitmap icon, boolean tintIcon) {
+                    // Not supported when displaying favourites
+                }
+            });
 
             image.setVisibility(View.VISIBLE);
             image.setContentDescription(result.name);

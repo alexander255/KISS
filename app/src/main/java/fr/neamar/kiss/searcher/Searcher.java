@@ -31,4 +31,20 @@ public abstract class Searcher extends AsyncTask<Void, Void, List<Result>> {
         activity.adapter.addAll(results);
         activity.resetTask();
     }
+    
+    /**
+     * Preload the contents of the first 10 results
+     *
+     * This method will delay the calling thread at most 50ms = 3 frames while waiting for the
+     * providers to respond.
+     *
+     * @param results Final list of results that is going to be returned to the caller
+     */
+    void preloadResults(List<Result> results) {
+        Result[] preloadResults = new Result[Math.min(results.size(), 10)];
+        for(int i = 0; i < preloadResults.length; i++) {
+            preloadResults[i] = results.get(i);
+        }
+        activity.adapter.preloadResults(preloadResults, 50);
+    }
 }
