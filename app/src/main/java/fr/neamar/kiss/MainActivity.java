@@ -12,12 +12,9 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.text.Editable;
@@ -33,7 +30,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -46,9 +42,7 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import fr.neamar.kiss.adapter.RecordAdapter;
-import fr.neamar.kiss.api.provider.IResultController;
 import fr.neamar.kiss.api.provider.Result;
-import fr.neamar.kiss.api.provider.ResultControllerConnection;
 import fr.neamar.kiss.broadcast.IncomingCallHandler;
 import fr.neamar.kiss.broadcast.IncomingSmsHandler;
 import fr.neamar.kiss.dataprovider.AppProvider;
@@ -347,7 +341,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
                 }
                 // Favorites handling
                 Result result = favorites.get(favNumber);
-                final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, new ResultStateManager(result));
+                final ResultView resultView = ResultView.create(MainActivity.this, new ResultStateManager(result, MainActivity.this));
                 resultView.getPopupMenu(adapter, view).show();
                 return true;
             }
@@ -387,7 +381,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
             if (initialize) {
                 Log.i(TAG, "Using quick favorites bar, filling content.");
                 favoritesKissBar.setVisibility(View.INVISIBLE);
-                displayFavorites();
+                updateFavourites();
             }
         } else {
             quickFavoritesBar.setVisibility(View.GONE);
@@ -608,7 +602,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         }
         // Favorites handling
         Result result = favorites.get(favNumber);
-        final ResultView resultView = ResultView.create(MainActivity.this, MainActivity.this, new ResultStateManager(result));
+        final ResultView resultView = ResultView.create(MainActivity.this, new ResultStateManager(result, MainActivity.this));
 
         resultView.fastLaunch(favorite);
     }
@@ -687,7 +681,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
             // Only display favorites if we're not using the quick bar
             if (favoritesKissBar.getVisibility() == View.VISIBLE) {
                 // Retrieve favorites. Try to retrieve more, since some favorites can't be displayed (e.g. search queries)
-                displayFavorites();
+                updateFavourites();
             }
         } else {
             // Hide the bar
@@ -721,7 +715,8 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         }
     }
 
-    public void displayFavorites() {
+    @Override
+    public void updateFavourites() {
         int[] favoritesIds = favoritesKissBar.getVisibility() == View.VISIBLE ? FAVS_IDS : FAV_BAR_IDS;
 
         ArrayList<Result> favoriteResults = KissApplication.getDataHandler(MainActivity.this)
@@ -749,7 +744,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
                 image.setImageResource(R.drawable.ic_contact);
             }
     
-            ResultStateManager stateManager = new ResultStateManager(result);
+            ResultStateManager stateManager = new ResultStateManager(result, MainActivity.this);
             stateManager.attachToRenderer(new ResultStateManager.IRenderer() {
                 @Override
                 public void onStateManagerAttached(ResultStateManager stateManager) {}
@@ -766,6 +761,11 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
                 public void displaySubicon(Bitmap icon, boolean tintIcon) {
                     // Not supported when displaying favourites
                 }
+    
+                @Override
+                public void updateButtonState(int action, boolean enabled, boolean sensitive) {
+                    // Not supported when displaying favourites
+                }
             });
 
             image.setVisibility(View.VISIBLE);
@@ -778,6 +778,7 @@ public class MainActivity extends Activity implements QueryInterface, KeyboardSc
         }
     }
 
+    @Override
     public void updateRecords() {
         updateRecords(searchEditText.getText().toString());
     }

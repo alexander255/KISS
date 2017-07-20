@@ -7,11 +7,13 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
+import android.os.RemoteException;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.ResultControllerConnection;
+import fr.neamar.kiss.api.provider.ResultControllerConnection.RecordLaunchFlags;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.SearchPojo;
@@ -55,17 +57,19 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(ResultControllerConnection controller, int action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) throws RemoteException {
 			switch(action) {
 				case ACTION_SHARE:
 					// Create a new contact with this phone number
 					this.launchShare();
+					
+					controller.notifyLaunch(RecordLaunchFlags.DEFAULT & ~RecordLaunchFlags.ADD_TO_HISTORY);
 					break;
 			}
 		}
 		
 		@Override
-		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			final DataItem   dataItem   = (DataItem)   this.result;
 			final SearchPojo searchPojo = (SearchPojo) dataItem.pojo;
 			
@@ -93,6 +97,8 @@ public final class UIEndpoint extends UIEndpointBase {
 				search = new Intent(Intent.ACTION_VIEW, uri);
 				search.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				context.startActivity(search);
+				
+				controller.notifyLaunch(RecordLaunchFlags.DEFAULT & ~RecordLaunchFlags.ADD_TO_HISTORY);
 			}
 		}
 		

@@ -38,7 +38,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import fr.neamar.kiss.KissApplication;
-import fr.neamar.kiss.MainActivity;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.UiTweaks;
 import fr.neamar.kiss.adapter.RecordAdapter;
@@ -89,10 +88,9 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 	 * Create new `ResultView` using its XML layout
 	 *
 	 * @param context UI Context that will host this View
-	 * @param parent
 	 * @param stateManager Object containing the result to render as well as all dynamic UI state
 	 */
-	public static ResultView create(Context context, QueryInterface parent, @Nullable ResultStateManager stateManager) {
+	public static ResultView create(Context context, @Nullable ResultStateManager stateManager) {
 		LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		ResultView resultView = (ResultView) inflater.inflate(R.layout.result, null);
 		resultView.setStateManager(stateManager);
@@ -260,7 +258,11 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 				
 				case TOGGLE_BUTTON:
 					Switch toggleButton = new Switch(this.getContext());
+					
+					// Button state will be sent by the provider as part of the asynchronous
+					// initialization part
 					toggleButton.setEnabled(false);
+					
 					try {
 						Method setThumbTintList = Switch.class.getMethod("setThumbTintList", ColorStateList.class);
 						setThumbTintList.invoke(toggleButton, thumbColors);
@@ -270,8 +272,6 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 						e.printStackTrace();
 					}
 					buttonContainer.addView(toggleButton);
-					
-					//TODO: Query button state from provider
 					
 					toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 						@Override
@@ -326,6 +326,25 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 	@Override
 	public void displaySubicon(Bitmap icon, boolean tintIcon) {
 		this.setImageContents(R.id.result_subicon, icon, tintIcon);
+	}
+	
+	@Override
+	public void updateButtonState(int action, boolean enabled, boolean sensitive) {
+		final Result result = this.stateManager.getResult();
+		LinearLayout buttonContainer = (LinearLayout) this.findViewById(R.id.result_extras);
+		
+		for(int idx = 0; idx < result.userInterface.buttonActions.length; idx++) {
+			if(result.userInterface.buttonActions[idx].action == action) {
+				View buttonView = buttonContainer.getChildAt(idx);
+				if(buttonView != null) {
+					buttonView.setEnabled(sensitive);
+					
+					if(buttonView instanceof Switch) {
+						((Switch) buttonView).setChecked(enabled);
+					}
+				}
+			}
+		}
 	}
 	
 	
@@ -477,9 +496,6 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 				return true;
 		}
 		
-		//Update Search to reflect favorite add, if the "exclude favorites" option is active
-		((MainActivity) this.getContext()).updateRecords();
-		
 		return false;
 	}
 	
@@ -490,7 +506,12 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 		KissApplication.getDataHandler(this.getContext()).addToFavorites(this.getContext(), result.id);
 		Toast.makeText(this.getContext(), String.format(msg, result.name), Toast.LENGTH_SHORT).show();
 		
-		((MainActivity) this.getContext()).displayFavorites();
+		// Update favourites and also search list (in case "exclude favorites" option is active)
+		QueryInterface queryInterface = this.stateManager.getQueryInterface();
+		if(queryInterface != null) {
+			queryInterface.updateFavourites();
+			queryInterface.updateRecords();
+		}
 	}
 	
 	private void launchRemoveFromFavorites() {
@@ -500,7 +521,12 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 		KissApplication.getDataHandler(this.getContext()).removeFromFavorites(this.getContext(), result.id);
 		Toast.makeText(this.getContext(), String.format(msg, result.name), Toast.LENGTH_SHORT).show();
 		
-		((MainActivity) this.getContext()).displayFavorites();
+		// Update favourites and also search list (in case "exclude favorites" option is active)
+		QueryInterface queryInterface = this.stateManager.getQueryInterface();
+		if(queryInterface != null) {
+			queryInterface.updateFavourites();
+			queryInterface.updateRecords();
+		}
 	}
 	
 	/**
@@ -515,11 +541,9 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
 	
 	public final void launch(View v) {
 		final Result result = this.stateManager.getResult();
-		Log.i("log", "Launching " + result.id);
-		
-		recordLaunch();
 		
 		// Launch
+		Log.i("log", "Launching " + result.id);
 		doLaunch(v);
 	}
 	
@@ -564,16 +588,6 @@ public class ResultView extends RelativeLayout implements ResultStateManager.IRe
     Spanned enrichText(String text) {
         return Html.fromHtml(text.replaceAll("\\{", "<font color=" + UiTweaks.getPrimaryColor(this.getContext()) + ">").replaceAll("\\}", "</font>"));
     }
-	
-	/**
-	 * Put this item in application history
-	 */
-	void recordLaunch() {
-		final Result result = this.stateManager.getResult();
-		
-		// Save in history
-		KissApplication.getDataHandler(this.getContext()).addToHistory(result.id);
-	}
 	
 	public void deleteRecord() {
 		final Result result = this.stateManager.getResult();

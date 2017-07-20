@@ -27,6 +27,7 @@ import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.ResultControllerConnection;
+import fr.neamar.kiss.api.provider.ResultControllerConnection.RecordLaunchFlags;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.AppPojo;
@@ -98,7 +99,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(ResultControllerConnection controller, int action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) throws RemoteException {
 			switch (action) {
 				case ACTION_EXCLUDE:
 					this.excludeFromAppList();
@@ -110,6 +111,8 @@ public final class UIEndpoint extends UIEndpointBase {
 				
 				case ACTION_DETAILS:
 					this.launchAppDetails();
+					
+					controller.notifyLaunch(RecordLaunchFlags.DEFAULT & ~RecordLaunchFlags.ADD_TO_HISTORY);
 					break;
 				
 				case ACTION_UNINSTALL:
@@ -123,7 +126,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			final DataItem dataItem = (DataItem) result;
 			final AppPojo  appPojo  = (AppPojo)  result.pojo;
 			
@@ -142,6 +145,8 @@ public final class UIEndpoint extends UIEndpointBase {
 					}
 					
 					context.startActivity(intent);
+					
+					controller.notifyLaunch();
 				}
 			} catch(ActivityNotFoundException e) {
 				// Application was just removed?

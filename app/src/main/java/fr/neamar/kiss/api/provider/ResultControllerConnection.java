@@ -16,8 +16,38 @@ public final class ResultControllerConnection implements Parcelable {
 	
 	final static int VERSION = 1;
 	
-	public final int               serial;
+	
+	/**
+	 * A continuously incremented serial number used for communicating to the remote provider
+	 * which state manager it is communicating with
+	 *
+	 * This may be useful if more than one connection is open for a given result and the remote
+	 * provider is keeping per-connection state.
+	 */
+	public final int serial;
+	
+	/**
+	 * Reference to the actual controller interface that is being wrapped by this class
+	 */
 	public final IResultController controller;
+	
+	
+	
+	/**
+	 * Flags that may be passed to `.notifyLaunch()`
+	 */
+	public final static class RecordLaunchFlags {
+		public final static int NONE           = 0x00000000;
+		/// Clear the launcher search bar upon recording the launch event?
+		public final static int RESET_UI       = 0x00000001;
+		/// Add this launch event to the launcher's history tracking system?
+		public final static int ADD_TO_HISTORY = 0x00000002;
+		/// Reload the result list of the launcher?
+		public final static int RELOAD_UI      = 0x00000004;
+		
+		public final static int DEFAULT = RESET_UI | ADD_TO_HISTORY;
+		public final static int ALL     = RESET_UI | ADD_TO_HISTORY | RELOAD_UI;
+	}
 	
 	
 	public static final Parcelable.Creator<ResultControllerConnection> CREATOR = new Parcelable.Creator<ResultControllerConnection>() {
@@ -55,6 +85,9 @@ public final class ResultControllerConnection implements Parcelable {
 	
 	
 	/*** Duplicate interface from `IResultController` for ease of use ***/
+	public void setButtonState(int action, boolean enabled, boolean sensitive) throws RemoteException {
+		this.controller.setButtonState(action, enabled, sensitive);
+	}
 	public void setIcon(Bitmap icon, boolean tintIcon) throws RemoteException {
 		this.controller.setIcon(icon, tintIcon);
 	}
@@ -63,6 +96,12 @@ public final class ResultControllerConnection implements Parcelable {
 	}
 	public void notifyReady() throws RemoteException {
 		this.controller.notifyReady();
+	}
+	public void notifyLaunch() throws RemoteException {
+		this.notifyLaunch(RecordLaunchFlags.DEFAULT);
+	}
+	public void notifyLaunch(int flags) throws RemoteException {
+		this.controller.notifyLaunch(flags & RecordLaunchFlags.ALL);
 	}
 	
 	

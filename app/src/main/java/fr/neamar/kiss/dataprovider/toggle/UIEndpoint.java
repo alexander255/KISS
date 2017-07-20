@@ -2,12 +2,15 @@ package fr.neamar.kiss.dataprovider.toggle;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.RemoteException;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.ResultControllerConnection;
+import fr.neamar.kiss.api.provider.ResultControllerConnection.RecordLaunchFlags;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.TogglesPojo;
@@ -51,57 +54,78 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	
 	public final class Callbacks extends UIEndpointBase.Callbacks {
+		private Boolean state = null;
+		
 		@Override
-		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			final DataItem    dataItem   = (DataItem)    this.result;
 			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
 			
-			//FIXME: Needs remote button UI implementation first
+			if(this.state == null) {
+				return;
+			}
+			
+			// Record launch event
+			controller.notifyLaunch();
+			
+			// Set new state cache value and synchronize it with the system value
+			this.state = !this.state;
+			this.applyToggleStateValue(controller);
 		}
 		
 		@Override
-		public void onButtonAction(ResultControllerConnection controller, int action, int newState) {
+		public void onButtonAction(ResultControllerConnection controller, int action, int newState) throws RemoteException {
 			final DataItem    dataItem   = (DataItem)    this.result;
 			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
 			
-			if(action != ACTION_TOGGLE) {
+			if(action != ACTION_TOGGLE || this.state == null) {
 				return;
 			}
 			
 			if(!getTogglesHandler().getState(togglePojo).equals(newState > 0)) {
-				//TODO: record launch manually (needs feedback channel)
-				//recordLaunch(buttonView.getContext());
+				// Record launch event
+				controller.notifyLaunch(RecordLaunchFlags.DEFAULT & ~RecordLaunchFlags.RESET_UI);
 				
-				getTogglesHandler().setState(togglePojo, newState > 0);
-				
-				//TODO: needs feedback channel
-				/*toggleButton.setEnabled(false);
-				new AsyncTask<Void, Void, Void>() {
-					
-					@Override
-					protected Void doInBackground(Void... params) {
-						try {
-							Thread.sleep(1500);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						return null;
-					}
-					
-					@Override
-					protected void onPostExecute(Void result) {
-						super.onPostExecute(result);
-						toggleButton.setEnabled(true);
-					}
-					
-				}.execute();*/
+				// Set new state cache value and synchronize it with the system value
+				this.state = (newState > 0);
+				this.applyToggleStateValue(controller);
 			}
+		}
+		
+		private void applyToggleStateValue(final ResultControllerConnection controller) throws RemoteException {
+			final DataItem    dataItem   = (DataItem)    this.result;
+			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
+			
+			// Disable toggle to prevent the user from repeatedly changing the toggle state
+			controller.setButtonState(ACTION_TOGGLE, this.state, false);
+			
+			// Update state of toggle in system
+			getTogglesHandler().setState(togglePojo, this.state);
+			
+			// Re-enable toggle after some delay
+			(new Handler(Looper.myLooper())).postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						controller.setButtonState(ACTION_TOGGLE, state, true);
+					} catch(RemoteException e) {
+						e.printStackTrace();
+					}
+				}
+			}, 1500);
 		}
 		
 		@Override
 		protected void onCreateAsync(ResultControllerConnection controller) throws RemoteException {
 			final DataItem    dataItem   = (DataItem)    this.result;
 			final TogglesPojo togglePojo = (TogglesPojo) dataItem.pojo;
+			
+			this.state = getTogglesHandler().getState(togglePojo);
+			if(this.state != null) {
+				controller.setButtonState(ACTION_TOGGLE, this.state, true);
+			} else {
+				controller.setButtonState(ACTION_TOGGLE, false, false);
+			}
 			
 			controller.setIcon(drawableToBitmap(togglePojo.icon), true);
 			controller.notifyReady();

@@ -38,7 +38,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			final DataItem     dataItem    = (DataItem)     this.result;
 			final SettingsPojo settingPojo = (SettingsPojo) dataItem.pojo;
 			
@@ -52,6 +52,8 @@ public final class UIEndpoint extends UIEndpointBase {
 			
 			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			context.startActivity(intent);
+			
+			controller.notifyLaunch();
 		}
 		
 		@Override

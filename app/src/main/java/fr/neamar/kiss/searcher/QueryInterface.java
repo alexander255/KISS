@@ -6,4 +6,6 @@ import fr.neamar.kiss.ui.ResultView;
 
 public interface QueryInterface {
 	void launchOccurred(ResultView result, View reason);
+	void updateRecords();
+	void updateFavourites();
 }

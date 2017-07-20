@@ -5,12 +5,14 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
+import android.os.RemoteException;
 import android.provider.ContactsContract;
 
 import fr.neamar.kiss.R;
 import fr.neamar.kiss.api.provider.ButtonAction;
 import fr.neamar.kiss.api.provider.MenuAction;
 import fr.neamar.kiss.api.provider.ResultControllerConnection;
+import fr.neamar.kiss.api.provider.ResultControllerConnection.RecordLaunchFlags;
 import fr.neamar.kiss.api.provider.UserInterface;
 import fr.neamar.kiss.dataprovider.utils.UIEndpointBase;
 import fr.neamar.kiss.pojo.PhonePojo;
@@ -49,20 +51,24 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(ResultControllerConnection controller, int action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) throws RemoteException {
 			switch (action) {
 				case ACTION_CREATE_CONTACT:
 					// Create a new contact with this phone number
 					this.launchCreateContact();
+					
+					controller.notifyLaunch(RecordLaunchFlags.DEFAULT & ~RecordLaunchFlags.ADD_TO_HISTORY);
 					break;
 				case ACTION_SEND_MESSAGE:
 					this.launchSendMessage();
+					
+					controller.notifyLaunch(RecordLaunchFlags.DEFAULT & ~RecordLaunchFlags.ADD_TO_HISTORY);
 					break;
 			}
 		}
 		
 		@Override
-		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			final DataItem  dataItem  = (DataItem)  this.result;
 			final PhonePojo phonePojo = (PhonePojo) dataItem.pojo;
 			
@@ -75,6 +81,8 @@ public final class UIEndpoint extends UIEndpointBase {
 			phone.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			
 			context.startActivity(phone);
+			
+			controller.notifyLaunch(RecordLaunchFlags.DEFAULT & ~RecordLaunchFlags.ADD_TO_HISTORY);
 		}
 		
 		

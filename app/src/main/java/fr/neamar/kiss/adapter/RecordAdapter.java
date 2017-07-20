@@ -1,9 +1,7 @@
 package fr.neamar.kiss.adapter;
 
 import android.content.Context;
-import android.os.Handler;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
@@ -20,7 +18,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.searcher.QueryInterface;
 import fr.neamar.kiss.ui.ResultStateManager;
@@ -54,7 +51,7 @@ public class RecordAdapter extends ArrayAdapter<Result> {
 		
 		// Create result view for each result
 		for(final Result result : results) {
-			ResultStateManager resultController = new ResultStateManager(result, false);
+			ResultStateManager resultController = new ResultStateManager(result, this.parent, false);
 			pendingResultIds.add(result.id);
 			
 			resultController.addCallbacks(new ResultStateManager.IReadyCallbacks() {
@@ -116,17 +113,17 @@ public class RecordAdapter extends ArrayAdapter<Result> {
 			if(view != null) {
 				((ResultView) view).setStateManager(stateManager);
 			} else {
-				view = ResultView.create(this.getContext(), this.parent, stateManager);
+				view = ResultView.create(this.getContext(), stateManager);
 			}
 			
 			return view;
 		}
 		
 		if(view != null) {
-			((ResultView) view).setStateManager(new ResultStateManager(this.getItem(position)));
+			((ResultView) view).setStateManager(new ResultStateManager(this.getItem(position), this.parent));
 			return view;
 		} else {
-			return ResultView.create(this.getContext(), this.parent, new ResultStateManager(this.getItem(position)));
+			return ResultView.create(this.getContext(), new ResultStateManager(this.getItem(position), this.parent));
 		}
 	}
 	
@@ -142,22 +139,7 @@ public class RecordAdapter extends ArrayAdapter<Result> {
 	public void onClick(final ResultView resultView, final View reason) {
 		try {
 			resultView.launch(resultView);
-		} catch(ArrayIndexOutOfBoundsException ignored) {
-			return;
-		}
-		
-		// Record the launch after some period,
-		// * to ensure the animation runs smoothly
-		// * to avoid a flickering -- launchOccurred will refresh the list
-		// Thus TOUCH_DELAY * 3
-		Handler handler = new Handler();
-		handler.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				parent.launchOccurred(resultView, reason);
-			}
-		}, KissApplication.TOUCH_DELAY * 3);
-		
+		} catch(ArrayIndexOutOfBoundsException ignored) {}
 	}
 	
 	public void removeResultView(ResultView resultView) {

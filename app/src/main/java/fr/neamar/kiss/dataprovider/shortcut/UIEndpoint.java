@@ -65,7 +65,7 @@ public final class UIEndpoint extends UIEndpointBase {
 		}
 		
 		@Override
-		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			final DataItem      dataItem     = (DataItem)      this.result;
 			final ShortcutsPojo shortcutPojo = (ShortcutsPojo) dataItem.pojo;
 			
@@ -76,6 +76,7 @@ public final class UIEndpoint extends UIEndpointBase {
 				}
 				
 				context.startActivity(intent);
+				controller.notifyLaunch();
 			} catch(Exception e) {
 				// Application was just removed?
 				Toast.makeText(context, R.string.application_not_found, Toast.LENGTH_LONG).show();

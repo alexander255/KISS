@@ -95,7 +95,7 @@ public final class UIEndpoint extends UIEndpointBase {
 	 */
 	public final class Callbacks extends UIEndpointBase.Callbacks {
 		@Override
-		public void onMenuAction(ResultControllerConnection controller, int action) {
+		public void onMenuAction(ResultControllerConnection controller, int action) throws RemoteException {
 			switch (action) {
 				case ACTION_COPY_NUMBER:
 					this.copyPhone();
@@ -108,16 +108,20 @@ public final class UIEndpoint extends UIEndpointBase {
 			switch(action) {
 				case ACTION_CALL:
 					launchCall();
+					
+					controller.notifyLaunch();
 					break;
 				
 				case ACTION_MESSAGE:
 					launchMessaging();
+					
+					controller.notifyLaunch();
 					break;
 			}
 		}
 		
 		@Override
-		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) {
+		public void onLaunch(ResultControllerConnection controller, Rect sourceBounds) throws RemoteException {
 			final DataItem     dataItem    = (DataItem)     this.result;
 			final ContactsPojo contactPojo = (ContactsPojo) dataItem.pojo;
 			
@@ -133,6 +137,8 @@ public final class UIEndpoint extends UIEndpointBase {
 			viewContact.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			viewContact.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
 			context.startActivity(viewContact);
+			
+			controller.notifyLaunch();
 		}
 		
 		@Override
@@ -168,7 +174,7 @@ public final class UIEndpoint extends UIEndpointBase {
 				@Override
 				public void run() {
 					//TODO: Add back-channel so that we tell the launcher to record this launch
-					//recordLaunch(context);
+					//notifyLaunch(context);
 					//queryInterface.launchOccurred(-1, ContactsResult.this);
 				}
 			}, KissApplication.TOUCH_DELAY);
@@ -188,7 +194,7 @@ public final class UIEndpoint extends UIEndpointBase {
 				@Override
 				public void run() {
 					//TODO: Add back-channel so that we tell the launcher to record this launch
-					//recordLaunch(context);
+					//notifyLaunch(context);
 					//queryInterface.launchOccurred(-1, ContactsResult.this);
 				}
 			}, KissApplication.TOUCH_DELAY);

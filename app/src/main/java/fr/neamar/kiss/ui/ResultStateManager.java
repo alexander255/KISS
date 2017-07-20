@@ -1,5 +1,6 @@
 package fr.neamar.kiss.ui;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
@@ -7,13 +8,19 @@ import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
+import fr.neamar.kiss.KissApplication;
 import fr.neamar.kiss.api.provider.IResultController;
 import fr.neamar.kiss.api.provider.Result;
 import fr.neamar.kiss.api.provider.ResultControllerConnection;
+import fr.neamar.kiss.api.provider.ResultControllerConnection.RecordLaunchFlags;
 import fr.neamar.kiss.api.provider.UserInterface;
+import fr.neamar.kiss.searcher.QueryInterface;
 
 /**
  * Stores all state that can be updated by a remote provider instance for any given result and
@@ -23,6 +30,10 @@ import fr.neamar.kiss.api.provider.UserInterface;
 public final class ResultStateManager {
 	/// The result item we are managing UI state for
 	final private Result result;
+	
+	/// Interface used to control the launcher search UI
+	@Nullable
+	final private QueryInterface queryInterface;
 	
 	/// Communication endpoint for the remote provider
 	@Nullable
@@ -43,6 +54,9 @@ public final class ResultStateManager {
 	/// Should the result subicon's color value be adjusted to match the primary launcher theme
 	/// color?
 	private boolean subiconTinted = false;
+	
+	@SuppressLint("UseSparseArrays") // Incorrect lint: Not applicable in this case
+	private HashMap<Integer, Pair<Boolean, Boolean>> buttonStates = new HashMap<>();
 	
 	
 	/// Reference of the actual object assigned to render the current state
@@ -83,6 +97,7 @@ public final class ResultStateManager {
 		void onStateManagerDetached(ResultStateManager stateManager);
 		void displayIcon(Bitmap icon, boolean tintIcon);
 		void displaySubicon(Bitmap icon, boolean tintIcon);
+		void updateButtonState(int action, boolean enabled, boolean sensitive);
 	}
 	
 	
@@ -114,6 +129,22 @@ public final class ResultStateManager {
 			this.stateManager = null;
 		}
 		
+		
+		@Override
+		public void setButtonState(final int action, final boolean enabled, final boolean sensitive) throws RemoteException {
+			this.handler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(stateManager != null) {
+						if(stateManager.renderer != null) {
+							stateManager.renderer.updateButtonState(action, enabled, sensitive);
+						}
+						
+						stateManager.buttonStates.put(action, new Pair<>(enabled, sensitive));
+					}
+				}
+			});
+		}
 		
 		@Override
 		public void setIcon(final Bitmap icon, final boolean tintIcon) {
@@ -165,17 +196,59 @@ public final class ResultStateManager {
 				}
 			});
 		}
+		
+		@Override
+		public void notifyLaunch(final int flags) {
+			this.handler.post(new Runnable() {
+				@Override
+				public void run() {
+					if(stateManager != null && stateManager.queryInterface != null) {
+						// Reset user interface state
+						if((flags & RecordLaunchFlags.RESET_UI) != 0) {
+							// Record the launch after some period,
+							// * to ensure the animation runs smoothly
+							// * to avoid a flickering -- launchOccurred will refresh the list
+							// Thus TOUCH_DELAY * 3
+							handler.postDelayed(new Runnable() {
+								@Override
+								public void run() {
+									stateManager.queryInterface.launchOccurred(null, null);
+								}
+							}, KissApplication.TOUCH_DELAY * 3);
+						}
+						
+						if((flags & RecordLaunchFlags.ADD_TO_HISTORY) != 0) {
+							// Save in history
+							KissApplication.getDataHandler(KissApplication.getMainActivity())
+									.addToHistory(stateManager.result.id);
+						}
+						
+						if((flags & RecordLaunchFlags.RELOAD_UI) != 0) {
+							// Reload launcher results
+							// (delay is added for similar reasons as with `RESET_UI`)
+							handler.postDelayed(new Runnable() {
+								@Override
+								public void run() {
+									stateManager.queryInterface.updateRecords();
+								}
+							}, KissApplication.TOUCH_DELAY * 3);
+						}
+					}
+				}
+			});
+		}
 	}
 	
 	
-	public ResultStateManager(Result result) {
-		this(result, true);
+	public ResultStateManager(Result result, @Nullable QueryInterface queryInterface) {
+		this(result, queryInterface, true);
 	}
 	
-	public ResultStateManager(Result result, boolean destroyOnDetach) {
+	public ResultStateManager(Result result, @Nullable QueryInterface queryInterface, boolean destroyOnDetach) {
 		this.controller      = new ResultControllerConnection(new Controller(this));
 		this.destroyOnDetach = destroyOnDetach;
 		this.result          = result;
+		this.queryInterface  = queryInterface;
 		
 		try {
 			this.result.callbacks.onCreate(this.controller);
@@ -230,6 +303,9 @@ public final class ResultStateManager {
 		}
 		if(this.subicon != null) {
 			this.renderer.displaySubicon(this.subicon, this.subiconTinted);
+		}
+		for(Map.Entry<Integer, Pair<Boolean, Boolean>> entry : this.buttonStates.entrySet()) {
+			this.renderer.updateButtonState(entry.getKey(), entry.getValue().first, entry.getValue().second);
 		}
 	}
 	
@@ -294,5 +370,13 @@ public final class ResultStateManager {
 	@Nullable
 	public ResultControllerConnection getController() {
 		return this.controller;
+	}
+	
+	/**
+	 * @return Interface used to update to launcher's display
+	 */
+	@Nullable
+	public QueryInterface getQueryInterface() {
+		return this.queryInterface;
 	}
 }
